@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
-const { createClient } = require('@libsql/client/web');
+// 1. Updated Turso Driver (Serverless compatible)
+const { createClient } = require('@tursodatabase/serverless/compat');
 const multer = require('multer');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const sharp = require('sharp');
@@ -10,7 +11,7 @@ const path = require('path');
 
 const app = express();
 
-// 1. Database Setup
+// 2. Database Setup
 const db = createClient({
   url: process.env.TURSO_DATABASE_URL,
   authToken: process.env.TURSO_AUTH_TOKEN,
@@ -30,9 +31,9 @@ db.batch([
   if (logoSetting.rows.length === 0) {
     await db.execute("INSERT INTO settings (key, value) VALUES ('logo_url', '')");
   }
-});
+}).catch(err => console.error("Database init error:", err));
 
-// 2. Cloudflare R2 Setup
+// 3. Cloudflare R2 Setup
 const s3 = new S3Client({
   region: 'auto',
   endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
@@ -57,7 +58,7 @@ const processAndUpload = async (fileBuffer) => {
   return `${process.env.R2_PUBLIC_URL}/${fileName}`;
 };
 
-// 3. Middleware
+// 4. Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.set('view engine', 'ejs');
@@ -75,49 +76,67 @@ const getSettings = async () => {
   return settings;
 };
 
-// 4. Routes
+// 5. Public Routes
 app.get('/', async (req, res) => {
-  const result = await db.execute("SELECT * FROM projects ORDER BY id DESC");
-  const settings = await getSettings();
-  res.render('index', { projects: result.rows, logoUrl: settings.logo_url });
-});
-
-app.get('/project/:id', async (req, res) => {
-  const result = await db.execute({ sql: "SELECT * FROM projects WHERE id = ?", args: [req.params.id] });
-  if (result.rows.length === 0) return res.status(404).send('Project not found');
-  const project = result.rows[0];
-  project.blocks = JSON.parse(project.blocks || '[]');
-  
-  const allProjectsResult = await db.execute("SELECT id, title, cover_image FROM projects WHERE id != ? ORDER BY id ASC", [req.params.id]);
-  const otherProjects = allProjectsResult.rows;
-  const settings = await getSettings();
-  
-  res.render('project', { project, logoUrl: settings.logo_url, otherProjects });
-});
-
-// Admin Login
-app.get('/login', (req, res) => res.render('login'));
-app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-  const result = await db.execute({ sql: "SELECT * FROM users WHERE username = ?", args: [username] });
-  const user = result.rows[0];
-  if (user && bcrypt.compareSync(password, user.password)) {
-    req.session.loggedIn = true;
-    res.redirect('/admin');
-  } else {
-    res.send("Invalid credentials. <a href='/login'>Try again</a>");
+  try {
+    const result = await db.execute("SELECT * FROM projects ORDER BY id DESC");
+    const settings = await getSettings();
+    res.render('index', { projects: result.rows, logoUrl: settings.logo_url });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error loading homepage.");
   }
 });
 
-// Admin Dashboard
-app.get('/admin', async (req, res) => {
-  if (!req.session.loggedIn) return res.redirect('/login');
-  const result = await db.execute("SELECT * FROM projects ORDER BY id DESC");
-  const settings = await getSettings();
-  res.render('admin', { projects: result.rows, logoUrl: settings.logo_url });
+app.get('/project/:id', async (req, res) => {
+  try {
+    const result = await db.execute({ sql: "SELECT * FROM projects WHERE id = ?", args: [req.params.id] });
+    if (result.rows.length === 0) return res.status(404).send('Project not found');
+    
+    const project = result.rows[0];
+    project.blocks = JSON.parse(project.blocks || '[]');
+    
+    const allProjectsResult = await db.execute("SELECT id, title, cover_image FROM projects WHERE id != ? ORDER BY id ASC", [req.params.id]);
+    const otherProjects = allProjectsResult.rows;
+    const settings = await getSettings();
+    
+    res.render('project', { project, logoUrl: settings.logo_url, otherProjects });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error loading project.");
+  }
 });
 
-// Add Project
+// 6. Admin Routes
+app.get('/login', (req, res) => res.render('login'));
+
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const result = await db.execute({ sql: "SELECT * FROM users WHERE username = ?", args: [username] });
+    const user = result.rows[0];
+    if (user && bcrypt.compareSync(password, user.password)) {
+      req.session.loggedIn = true;
+      res.redirect('/admin');
+    } else {
+      res.send("Invalid credentials. <a href='/login'>Try again</a>");
+    }
+  } catch (err) {
+    res.status(500).send("Login error");
+  }
+});
+
+app.get('/admin', async (req, res) => {
+  if (!req.session.loggedIn) return res.redirect('/login');
+  try {
+    const result = await db.execute("SELECT * FROM projects ORDER BY id DESC");
+    const settings = await getSettings();
+    res.render('admin', { projects: result.rows, logoUrl: settings.logo_url });
+  } catch (err) {
+    res.status(500).send("Error loading admin dashboard.");
+  }
+});
+
 app.post('/admin/add', upload.array('images', 20), async (req, res) => {
   if (!req.session.loggedIn) return res.redirect('/login');
   const { title } = req.body;
@@ -133,10 +152,12 @@ app.post('/admin/add', upload.array('images', 20), async (req, res) => {
       args: [title, blocks.length > 0 ? blocks[0].url : '', JSON.stringify(blocks)]
     });
     res.redirect('/admin');
-  } catch (err) { res.status(500).send("Error: " + err.message); }
+  } catch (err) { 
+    console.error(err);
+    res.status(500).send("Error adding project: " + err.message); 
+  }
 });
 
-// Edit Project
 app.post('/admin/edit/:id', upload.fields([{ name: 'cover_image', maxCount: 1 }, { name: 'new_images', maxCount: 20 }]), async (req, res) => {
   if (!req.session.loggedIn) return res.redirect('/login');
   const { id } = req.params;
@@ -169,27 +190,36 @@ app.post('/admin/edit/:id', upload.fields([{ name: 'cover_image', maxCount: 1 },
       args: [title, description, JSON.stringify(blocks), coverImageUrl, id]
     });
     res.redirect('/admin');
-  } catch (err) { res.status(500).send("Error: " + err.message); }
+  } catch (err) { 
+    console.error(err);
+    res.status(500).send("Error updating project: " + err.message); 
+  }
 });
 
-// Delete Project
 app.post('/admin/delete/:id', async (req, res) => {
   if (!req.session.loggedIn) return res.redirect('/login');
-  await db.execute({ sql: "DELETE FROM projects WHERE id = ?", args: [req.params.id] });
-  res.redirect('/admin');
+  try {
+    await db.execute({ sql: "DELETE FROM projects WHERE id = ?", args: [req.params.id] });
+    res.redirect('/admin');
+  } catch (err) {
+    res.status(500).send("Error deleting project.");
+  }
 });
 
-// Upload Logo
 app.post('/admin/settings/logo', upload.single('logo'), async (req, res) => {
   if (!req.session.loggedIn) return res.redirect('/login');
   if (req.file) {
-    const logoUrl = await processAndUpload(req.file.buffer);
-    await db.execute({ sql: "UPDATE settings SET value = ? WHERE key = 'logo_url'", args: [logoUrl] });
+    try {
+      const logoUrl = await processAndUpload(req.file.buffer);
+      await db.execute({ sql: "UPDATE settings SET value = ? WHERE key = 'logo_url'", args: [logoUrl] });
+    } catch (err) {
+      console.error("Logo upload error:", err);
+    }
   }
   res.redirect('/admin');
 });
 
-// Vercel Export
+// 7. Vercel Export
 if (process.env.NODE_ENV !== 'production') {
   app.listen(3000, () => console.log('Server running at http://localhost:3000'));
 }
