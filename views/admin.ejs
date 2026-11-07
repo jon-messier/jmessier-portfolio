@@ -184,7 +184,7 @@
       }
     });
 
-    // 3. Handle Project Editing
+    // 3. Handle Project Editing (WITH CRITICAL SAFETY CHECK)
     document.querySelectorAll('.edit-form').forEach(form => {
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -201,7 +201,17 @@
           const newEmbedCode = form.querySelector('textarea[name="new_embed_code"]').value;
           let coverImageUrl = form.querySelector('input[name="current_cover"]').value;
           
-          let blocks = JSON.parse(form.querySelector('input[name="blocks_json"]').value || '[]');
+          // Safety check: Ensure blocks is ALWAYS an array
+          let blocks = [];
+          try {
+            const parsedData = JSON.parse(form.querySelector('input[name="blocks_json"]').value || '[]');
+            if (Array.isArray(parsedData)) {
+              blocks = parsedData;
+            }
+          } catch (parseError) {
+            console.warn("Could not parse existing blocks, starting fresh.", parseError);
+            blocks = [];
+          }
           
           const coverInput = form.querySelector('input[name="cover_image"]');
           if (coverInput.files.length > 0) {
