@@ -94,7 +94,15 @@ app.get('/project/:id', async (req, res) => {
     if (result.rows.length === 0) return res.status(404).send('Project not found');
     
     const project = result.rows[0];
-    project.blocks = JSON.parse(project.blocks || '[]');
+    // Safely parse the blocks. If it's invalid, default to an empty array.
+try {
+  project.blocks = JSON.parse(project.blocks);
+  if (!Array.isArray(project.blocks)) {
+    project.blocks = [];
+  }
+} catch (e) {
+  project.blocks = [];
+}
     
     const allProjectsResult = await db.execute("SELECT id, title, cover_image FROM projects WHERE id != ? ORDER BY id ASC", [req.params.id]);
     const otherProjects = allProjectsResult.rows;
