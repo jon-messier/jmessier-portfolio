@@ -107,11 +107,12 @@
       if (!res.ok) throw new Error(data.error);
 
       // Upload the actual file to the signed URL
-      await fetch(data.uploadUrl, {
+      const putRes = await fetch(data.uploadUrl, {
         method: 'PUT',
         headers: { 'Content-Type': file.type },
         body: file
       });
+      if (!putRes.ok) throw new Error('Upload to storage failed (' + putRes.status + ') for ' + file.name);
       
       return data.finalUrl;
     }
