@@ -28,8 +28,8 @@
           <% if (block.type === 'single') { %>
             <div class="block-single"><img src="<%= block.url %>" onclick="openLightbox(this.src)" oncontextmenu="return false;"></div>
           <% } else if (block.type === 'grid') { %>
-            <div class="block-grid" style="gap: <%= block.gap || 1.5 %>rem;">
-              <% block.images.forEach(function(img) { %><img src="<%= img %>" onclick="openLightbox(this.src)" oncontextmenu="return false;"><% }); %>
+            <div class="block-grid" data-cols="<%= block.cols %>" style="--cols: <%= block.cols %>; gap: <%= block.gap %>rem;">
+              <% block.images.forEach(function(img) { if (img) { %><img src="<%= img %>" onclick="openLightbox(this.src)" oncontextmenu="return false;"><% } }); %>
             </div>
           <% } else if (block.type === 'embed') { %>
             <div class="block-embed"><%- block.code %></div>
