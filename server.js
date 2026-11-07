@@ -94,15 +94,20 @@ app.get('/project/:id', async (req, res) => {
     if (result.rows.length === 0) return res.status(404).send('Project not found');
     
     const project = result.rows[0];
-    // Safely parse the blocks. If it's invalid, default to an empty array.
-try {
-  project.blocks = JSON.parse(project.blocks);
-  if (!Array.isArray(project.blocks)) {
-    project.blocks = [];
-  }
-} catch (e) {
-  project.blocks = [];
-}
+    
+    // Safely parse the blocks. If it fails or is not an array, default to empty.
+    let parsedBlocks = [];
+    try {
+      if (project.blocks) {
+        const parsed = JSON.parse(project.blocks);
+        if (Array.isArray(parsed)) {
+          parsedBlocks = parsed;
+        }
+      }
+    } catch (err) {
+      console.error("Error parsing blocks for project:", project.id, err);
+    }
+    project.blocks = parsedBlocks;
     
     const allProjectsResult = await db.execute("SELECT id, title, cover_image FROM projects WHERE id != ? ORDER BY id ASC", [req.params.id]);
     const otherProjects = allProjectsResult.rows;
@@ -171,7 +176,16 @@ app.post('/admin/edit/:id', upload.fields([{ name: 'cover_image', maxCount: 1 },
   const { id } = req.params;
   const { title, description, blocks_json } = req.body;
   try {
-    let blocks = JSON.parse(blocks_json || '[]');
+    let blocks = [];
+    try {
+      if (blocks_json) {
+        const parsed = JSON.parse(blocks_json);
+        if (Array.isArray(parsed)) blocks = parsed;
+      }
+    } catch (e) {
+      console.error("Failed to parse blocks_json from admin form");
+    }
+
     let coverImageUrl = '';
 
     if (req.files['cover_image'] && req.files['cover_image'][0]) {
