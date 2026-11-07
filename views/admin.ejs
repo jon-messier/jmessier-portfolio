@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin | Manage Projects</title>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
@@ -24,10 +25,59 @@
     .btn-outline:hover { background: #333; color: #fff; }
     .project-row { display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: #1a1a1a; border: 1px solid #333; border-radius: 6px; margin-bottom: 1rem; }
     .project-info { display: flex; align-items: center; gap: 1rem; }
-    .project-info img { width: 80px; height: 60px; object-fit: cover; border-radius: 4px; }
+    .project-info img { width: 80px; height: 60px; object-fit: cover; border-radius: 4px; background: #111; }
     .edit-panel { display: none; background: #1a1a1a; padding: 1.5rem; border-radius: 6px; border: 1px solid #4361ee; margin-bottom: 2rem; }
     .edit-panel.active { display: block; }
     .status-msg { font-size: 0.9rem; margin-top: 1rem; color: #4361ee; }
+    .status-msg.err { color: #e63946; }
+    .status-msg.ok { color: #52b788; }
+    .hint { font-size: 0.8rem; color: #777; margin: -0.25rem 0 0.75rem; text-transform: none; letter-spacing: 0; }
+
+    /* Cover */
+    .cover-row { display: flex; gap: 1rem; align-items: center; }
+    .cover-row img { width: 120px; height: 90px; object-fit: cover; border-radius: 4px; background: #111; flex-shrink: 0; }
+
+    /* Layout editor */
+    .layout-editor { display: flex; flex-direction: column; }
+    .layout-editor.busy { opacity: 0.6; pointer-events: none; }
+    .layout-empty { color: #777; font-size: 0.9rem; padding: 1.5rem; text-align: center; border: 1px dashed #444; border-radius: 6px; }
+    .blk { background: #111; border: 1px solid #333; border-radius: 6px; padding: 0.75rem; }
+    .blk-head { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.6rem; font-size: 0.85rem; color: #aaa; }
+    .blk-label { font-weight: 600; color: #ddd; }
+    .handle { cursor: grab; font-size: 1.2rem; color: #777; padding: 0 0.3rem; user-select: none; line-height: 1; }
+    .handle:hover { color: #fff; }
+    .grow { flex: 1; }
+    .mini { background: #2a2a2a; color: #ddd; border: 1px solid #444; border-radius: 4px; padding: 4px 9px; font-size: 0.8rem; cursor: pointer; font-family: inherit; }
+    .mini:hover { background: #3a3a3a; }
+    .mini:disabled { opacity: 0.35; cursor: default; }
+    .mini.danger:hover { background: #e63946; border-color: #e63946; color: #fff; }
+    .blk-head input[type="number"], .blk-head select { padding: 4px; background: #1a1a1a; border: 1px solid #444; color: #fff; border-radius: 4px; font-family: inherit; font-size: 0.8rem; }
+    .blk-head input[type="number"] { width: 3.2rem; }
+    .grid-edit { display: grid; gap: 0.5rem; }
+    .tile { position: relative; height: 110px; background: #1d1d1d; border-radius: 4px; overflow: hidden; border: 2px solid transparent; }
+    .tile.wide { height: 150px; }
+    .tile img { width: 100%; height: 100%; object-fit: cover; display: block; cursor: grab; }
+    .tile.wide img { object-fit: contain; background: #000; }
+    .tile.over { border-color: #4361ee; }
+    .tile.empty { border: 2px dashed #444; display: flex; align-items: center; justify-content: center; }
+    .tile.empty.over { border-color: #4361ee; background: rgba(67, 97, 238, 0.15); }
+    .tile-bar { position: absolute; top: 4px; right: 4px; display: flex; gap: 3px; opacity: 0; transition: opacity 0.15s; }
+    .tile:hover .tile-bar, .tile:focus-within .tile-bar { opacity: 1; }
+    @media (hover: none) { .tile-bar { opacity: 1; } }
+    .tile-bar button { background: rgba(0, 0, 0, 0.8); color: #fff; border: none; border-radius: 3px; width: 28px; height: 28px; cursor: pointer; font-size: 0.85rem; }
+    .tile-bar button:hover { background: #4361ee; }
+    .tile-bar button:disabled { opacity: 0.3; cursor: default; background: rgba(0, 0, 0, 0.8); }
+    .tile-bar button.on { color: #ffd166; }
+    .cover-badge { position: absolute; left: 4px; top: 4px; background: #ffd166; color: #000; font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .missing { display: none; position: absolute; inset: 0; align-items: center; justify-content: center; text-align: center; padding: 0.5rem; font-size: 0.8rem; color: #ff8a93; background: #1a1010; }
+    .tile.broken .missing { display: flex; }
+    .tile.broken img { visibility: hidden; }
+    .embed-code { width: 100%; font-family: monospace; font-size: 0.8rem; }
+    .dz { height: 10px; margin: 2px 0; border-radius: 4px; transition: height 0.1s, background 0.1s; }
+    body.dragging .dz { height: 26px; background: rgba(67, 97, 238, 0.08); border: 1px dashed rgba(67, 97, 238, 0.5); }
+    .dz.over { background: rgba(67, 97, 238, 0.45) !important; }
+    .editor-tools { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0 1.5rem; }
+    .editor-actions { display: flex; gap: 0.5rem; align-items: center; border-top: 1px solid #333; padding-top: 1rem; }
   </style>
 </head>
 <body>
@@ -36,7 +86,7 @@
       <h1>Admin Dashboard</h1>
       <a href="/" class="btn btn-outline" target="_blank">View Site &rarr;</a>
     </div>
-    
+
     <!-- Logo Upload -->
     <div class="card">
       <h2>Global Settings</h2>
@@ -67,199 +117,537 @@
     <h2>Existing Projects</h2>
     <% projects.forEach(function(project) { %>
       <div class="project-row">
-        <div class="project-info"><img src="<%= project.cover_image %>"><div><h3 style="margin:0;"><%= project.title %></h3></div></div>
+        <div class="project-info"><img id="thumb-<%= project.id %>" src="<%= project.cover_image %>" alt=""><div><h3 style="margin:0;" id="rowtitle-<%= project.id %>"><%= project.title %></h3></div></div>
         <div style="display:flex; gap:0.5rem;">
           <button class="btn btn-sm" onclick="toggleEdit('<%= project.id %>')">Edit</button>
-          <form action="/admin/delete/<%= project.id %>" method="POST"><button type="submit" class="btn btn-danger btn-sm">Delete</button></form>
+          <form action="/admin/delete/<%= project.id %>" method="POST" onsubmit="return confirm('Delete this project? This can\'t be undone.');"><button type="submit" class="btn btn-danger btn-sm">Delete</button></form>
         </div>
       </div>
-      
+
       <!-- Edit Panel -->
-      <div id="edit-<%= project.id %>" class="edit-panel">
-        <form class="edit-form" data-id="<%= project.id %>">
-          <div class="form-group"><label>Title</label><input type="text" name="title" value="<%= project.title %>" required></div>
-          <div class="form-group"><label>Description</label><textarea name="description" rows="3"><%= project.description || '' %></textarea></div>
-          <div class="form-group"><label>Change Cover</label><input type="file" name="cover_image" accept="image/*"></div>
-          <div class="form-group"><label>Add New Images</label><input type="file" name="new_images" multiple accept="image/*"></div>
-          <div class="form-group" style="border-top: 1px solid #444; padding-top: 1rem;"><label>Add Embed (FlipSnack/YouTube)</label><textarea name="new_embed_code" rows="2" placeholder="Paste iframe code..."></textarea></div>
-          
-          <input type="hidden" name="blocks_json" value='<%= JSON.stringify(project.blocks) %>'>
-          <input type="hidden" name="current_cover" value="<%= project.cover_image %>">
-          
-          <button type="submit" class="btn">Save Changes</button>
-          <button type="button" class="btn btn-outline" onclick="toggleEdit('<%= project.id %>')">Cancel</button>
-          <p class="status-msg" id="status-<%= project.id %>"></p>
-        </form>
+      <div id="edit-<%= project.id %>" class="edit-panel" data-id="<%= project.id %>">
+        <div class="form-group"><label>Title</label><input type="text" class="f-title"></div>
+        <div class="form-group"><label>Description</label><textarea class="f-desc" rows="3"></textarea></div>
+
+        <div class="form-group">
+          <label>Cover Image</label>
+          <p class="hint">Shown on the homepage. Click ★ on any image below to use it, or upload a different one.</p>
+          <div class="cover-row">
+            <img class="f-cover-preview" alt="">
+            <button type="button" class="mini f-cover-upload">Upload a different cover…</button>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:0;">
+          <label>Layout</label>
+          <p class="hint">Drag images by the picture and blocks by ⠿. Drop an image on another image to swap them, into a grid slot, or onto a blue bar to make it its own row. Nothing is saved until you click Save.</p>
+        </div>
+        <div class="layout-editor" id="layout-<%= project.id %>"></div>
+
+        <div class="editor-tools">
+          <button type="button" class="mini f-add-images">+ Add images</button>
+          <button type="button" class="mini f-add-grid">+ Add grid</button>
+          <button type="button" class="mini f-add-embed">+ Add embed (FlipSnack/YouTube)</button>
+        </div>
+
+        <div class="editor-actions">
+          <button type="button" class="btn f-save">Save Changes</button>
+          <button type="button" class="btn btn-outline f-cancel">Cancel</button>
+        </div>
+        <p class="status-msg" id="status-<%= project.id %>"></p>
       </div>
     <% }); %>
   </div>
 
+  <script id="projects-data" type="application/json"><%- JSON.stringify(projects).replace(/</g, '\\u003c') %></script>
   <script>
-    // Helper to upload a single file directly to R2
+    // ---------- Uploading ----------
+    // Uploads one file straight to Cloudflare R2 and returns its public URL.
+    // Every failure is turned into a message that says which step broke.
     async function uploadFileToR2(file) {
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin', // <--- CRITICAL FIX: Sends session cookie
-        body: JSON.stringify({ filename: file.name, contentType: file.type })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (file.type && !file.type.startsWith('image/')) throw new Error(file.name + " isn't an image file.");
 
-      // Upload the actual file to the signed URL
-      const putRes = await fetch(data.uploadUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': file.type },
-        body: file
-      });
-      if (!putRes.ok) throw new Error('Upload to storage failed (' + putRes.status + ') for ' + file.name);
-      
+      let res;
+      try {
+        res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ filename: file.name, contentType: file.type })
+        });
+      } catch (e) {
+        throw new Error("Couldn't reach your server to start the upload. Check your internet connection and try again.");
+      }
+      let data = {};
+      try { data = await res.json(); } catch (e) {}
+      if (res.status === 401) throw new Error('Your login expired. Log in again in a new tab, then retry. Your unsaved changes are still here.');
+      if (!res.ok) throw new Error(data.error || ('The server failed to prepare the upload (error ' + res.status + ').'));
+
+      let put;
+      try {
+        put = await fetch(data.uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+      } catch (e) {
+        throw new Error('Cloudflare R2 blocked the upload of ' + file.name + '. This almost always means the bucket\'s CORS policy doesn\'t allow this site yet. Nothing was saved for this image.');
+      }
+      if (!put.ok) throw new Error('Cloudflare R2 rejected ' + file.name + ' (error ' + put.status + ').');
       return data.finalUrl;
     }
 
-    // 1. Handle Logo Upload
+    function pickFiles(multiple) {
+      return new Promise(resolve => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.multiple = !!multiple;
+        input.addEventListener('change', () => resolve(Array.from(input.files || [])));
+        input.click();
+      });
+    }
+
+    // ---------- Logo ----------
     document.getElementById('logoInput').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
       const status = document.getElementById('logoStatus');
+      status.className = 'status-msg';
       status.textContent = 'Uploading...';
-      
       try {
         const finalUrl = await uploadFileToR2(file);
-        
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = '/admin/settings/logo';
         const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'logo_url';
-        input.value = finalUrl;
+        input.type = 'hidden'; input.name = 'logo_url'; input.value = finalUrl;
         form.appendChild(input);
         document.body.appendChild(form);
         form.submit();
       } catch (err) {
-        status.textContent = 'Error: ' + err.message;
-        status.style.color = '#e63946';
+        status.className = 'status-msg err';
+        status.textContent = err.message;
       }
     });
 
-    // 2. Handle New Project Creation
+    // ---------- New project ----------
     document.getElementById('addForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const title = document.getElementById('addTitle').value;
-      const files = document.getElementById('addImages').files;
+      const files = Array.from(document.getElementById('addImages').files);
       const btn = document.getElementById('addBtn');
       const status = document.getElementById('addStatus');
-      
       if (!files.length) return alert('Please select images.');
-      
+
       btn.disabled = true;
-      status.textContent = 'Uploading images...';
-      
+      status.className = 'status-msg';
       try {
         const blocks = [];
-        for (const file of files) {
-          const url = await uploadFileToR2(file);
-          blocks.push({ type: 'single', url: url });
+        for (let i = 0; i < files.length; i++) {
+          status.textContent = 'Uploading image ' + (i + 1) + ' of ' + files.length + '...';
+          blocks.push({ type: 'single', url: await uploadFileToR2(files[i]) });
         }
-        
         status.textContent = 'Saving to database...';
-        
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = '/admin/add';
-        
-        const titleInput = document.createElement('input');
-        titleInput.type = 'hidden'; titleInput.name = 'title'; titleInput.value = title;
-        form.appendChild(titleInput);
-        
-        const blocksInput = document.createElement('input');
-        blocksInput.type = 'hidden'; blocksInput.name = 'blocks'; blocksInput.value = JSON.stringify(blocks);
-        form.appendChild(blocksInput);
-        
+        [['title', title], ['blocks', JSON.stringify(blocks)]].forEach(([name, value]) => {
+          const input = document.createElement('input');
+          input.type = 'hidden'; input.name = name; input.value = value;
+          form.appendChild(input);
+        });
         document.body.appendChild(form);
         form.submit();
       } catch (err) {
-        status.textContent = 'Error: ' + err.message;
-        status.style.color = '#e63946';
+        status.className = 'status-msg err';
+        status.textContent = err.message;
         btn.disabled = false;
       }
     });
 
-    // 3. Handle Project Editing
-    document.querySelectorAll('.edit-form').forEach(form => {
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const id = form.getAttribute('data-id');
-        const btn = form.querySelector('button[type="submit"]');
-        const status = document.getElementById('status-' + id);
-        
-        btn.disabled = true;
-        status.textContent = 'Uploading...';
-        
-        try {
-          const title = form.querySelector('input[name="title"]').value;
-          const description = form.querySelector('textarea[name="description"]').value;
-          const newEmbedCode = form.querySelector('textarea[name="new_embed_code"]').value;
-          let coverImageUrl = form.querySelector('input[name="current_cover"]').value;
-          
-          let blocks = [];
-          try {
-            const parsedData = JSON.parse(form.querySelector('input[name="blocks_json"]').value || '[]');
-            if (Array.isArray(parsedData)) {
-              blocks = parsedData;
-            }
-          } catch (parseError) {
-            console.warn("Could not parse existing blocks, starting fresh.", parseError);
-            blocks = [];
-          }
-          
-          const coverInput = form.querySelector('input[name="cover_image"]');
-          if (coverInput.files.length > 0) {
-            coverImageUrl = await uploadFileToR2(coverInput.files[0]);
-          }
-          
-          const newImagesInput = form.querySelector('input[name="new_images"]');
-          if (newImagesInput.files.length > 0) {
-            for (const file of newImagesInput.files) {
-              const url = await uploadFileToR2(file);
-              blocks.push({ type: 'single', url: url });
-            }
-          }
-          
-          if (newEmbedCode.trim() !== '') {
-            blocks.push({ type: 'embed', code: newEmbedCode.trim() });
-          }
-          
-          status.textContent = 'Saving changes...';
-          
-          const finalForm = document.createElement('form');
-          finalForm.method = 'POST';
-          finalForm.action = '/admin/edit/' + id;
-          
-          const addHidden = (name, value) => {
-            const input = document.createElement('input');
-            input.type = 'hidden'; input.name = name; input.value = value;
-            finalForm.appendChild(input);
-          };
-          
-          addHidden('title', title);
-          addHidden('description', description);
-          addHidden('blocks', JSON.stringify(blocks));
-          addHidden('cover_image', coverImageUrl);
-          
-          document.body.appendChild(finalForm);
-          finalForm.submit();
-          
-        } catch (err) {
-          status.textContent = 'Error: ' + err.message;
-          status.style.color = '#e63946';
-          btn.disabled = false;
+    // ---------- Layout editor ----------
+    const ORIGINAL = {};
+    JSON.parse(document.getElementById('projects-data').textContent).forEach(p => { ORIGINAL[String(p.id)] = p; });
+    const S = {};          // working copy per project id
+    let DRAG = null;       // what's being dragged right now
+
+    const clone = (x) => JSON.parse(JSON.stringify(x));
+    const panel = (id) => document.getElementById('edit-' + id);
+
+    function el(tag, attrs, ...kids) {
+      const node = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs || {})) {
+        if (k === 'class') node.className = v;
+        else if (k === 'text') node.textContent = v;
+        else if (k.startsWith('on')) node.addEventListener(k.slice(2), v);
+        else if (v === true) node.setAttribute(k, '');
+        else if (v !== false && v != null) node.setAttribute(k, v);
+      }
+      kids.forEach(kid => kid && node.append(kid));
+      return node;
+    }
+    const mini = (text, title, onclick, opts) =>
+      el('button', Object.assign({ type: 'button', class: 'mini', text, title, onclick }, opts || {}));
+
+    function resetState(id) {
+      const o = ORIGINAL[id];
+      S[id] = { title: o.title || '', description: o.description || '', cover: o.cover_image || '', blocks: clone(o.blocks || []), dirty: false, busy: 0 };
+      const p = panel(id);
+      p.querySelector('.f-title').value = S[id].title;
+      p.querySelector('.f-desc').value = S[id].description;
+    }
+
+    function setStatus(id, msg, kind) {
+      const s = document.getElementById('status-' + id);
+      s.className = 'status-msg' + (kind ? ' ' + kind : '');
+      s.textContent = msg || '';
+    }
+
+    function changed(id, msg) {
+      S[id].dirty = true;
+      render(id);
+      setStatus(id, msg || 'Unsaved changes.', '');
+    }
+
+    function firstImage(blocks) {
+      for (const b of blocks) {
+        if (b.type === 'single') return b.url;
+        if (b.type === 'grid') { const img = b.images.find(Boolean); if (img) return img; }
+      }
+      return '';
+    }
+
+    // Image locations: { b: blockIndex, s: slotIndex } (s = null for a single image)
+    function getAt(st, loc) { const b = st.blocks[loc.b]; return loc.s === null ? b.url : b.images[loc.s]; }
+    function setAt(st, loc, url) { const b = st.blocks[loc.b]; if (loc.s === null) b.url = url; else b.images[loc.s] = url; }
+    function clearAt(st, loc) { if (loc.s === null) st.blocks[loc.b]._removed = true; else st.blocks[loc.b].images[loc.s] = null; }
+    function sweep(st) { st.blocks = st.blocks.filter(b => !b._removed); }
+
+    // --- Actions ---
+    function moveBlock(id, from, to) {
+      const st = S[id];
+      if (to < 0 || to >= st.blocks.length) return;
+      const [blk] = st.blocks.splice(from, 1);
+      st.blocks.splice(to, 0, blk);
+      changed(id);
+    }
+    function moveBlockTo(id, from, pos) {   // pos = gap index between blocks
+      if (pos === from || pos === from + 1) return;
+      const st = S[id];
+      const [blk] = st.blocks.splice(from, 1);
+      st.blocks.splice(pos > from ? pos - 1 : pos, 0, blk);
+      changed(id);
+    }
+    function removeBlock(id, i) {
+      const st = S[id];
+      const removed = st.blocks.splice(i, 1)[0];
+      if (removed && (removed.url === st.cover || (removed.images || []).includes(st.cover))) st.cover = firstImage(st.blocks);
+      changed(id, 'Block removed. Click Cancel to undo, or Save to keep it.');
+    }
+    function removeImage(id, loc) {
+      const st = S[id];
+      const url = getAt(st, loc);
+      clearAt(st, loc); sweep(st);
+      if (url === st.cover) st.cover = firstImage(st.blocks);
+      changed(id, 'Image removed. Click Cancel to undo, or Save to keep it.');
+    }
+    function shiftSlot(id, loc, dir) {
+      const imgs = S[id].blocks[loc.b].images;
+      const t = loc.s + dir;
+      if (t < 0 || t >= imgs.length) return;
+      [imgs[loc.s], imgs[t]] = [imgs[t], imgs[loc.s]];
+      changed(id);
+    }
+    function setCover(id, url) { S[id].cover = url; changed(id, 'Cover changed.'); }
+
+    function dropImageOn(id, target) {          // onto an image or grid slot: place it there, swap if occupied
+      const st = S[id], src = DRAG.loc;
+      if (src.b === target.b && src.s === target.s) return;
+      const moving = getAt(st, src), occupant = getAt(st, target);
+      setAt(st, target, moving);
+      if (occupant) setAt(st, src, occupant); else clearAt(st, src);
+      sweep(st);
+      changed(id);
+    }
+    function dropImageAt(id, pos) {             // onto a gap: becomes its own full-width image
+      const st = S[id], src = DRAG.loc;
+      if (src.s === null && (pos === src.b || pos === src.b + 1)) return;
+      const url = getAt(st, src);
+      clearAt(st, src);
+      st.blocks.splice(pos, 0, { type: 'single', url });
+      sweep(st);
+      changed(id);
+    }
+
+    function setLayout(id, i, rows, cols) {
+      const st = S[id], b = st.blocks[i];
+      rows = Math.min(10, Math.max(1, parseInt(rows, 10) || 1));
+      cols = Math.min(6, Math.max(1, parseInt(cols, 10) || 1));
+      const size = rows * cols;
+      const keep = b.images.slice(0, size);
+      while (keep.length < size) keep.push(null);
+      const overflow = b.images.slice(size).filter(Boolean);
+      for (let k = 0; k < keep.length && overflow.length; k++) if (!keep[k]) keep[k] = overflow.shift();
+      b.rows = rows; b.cols = cols; b.images = keep;
+      if (overflow.length) st.blocks.splice(i + 1, 0, ...overflow.map(url => ({ type: 'single', url })));
+      changed(id, overflow.length ? overflow.length + ' image(s) didn\'t fit, so they were moved just below the grid.' : '');
+    }
+    function splitGrid(id, i) {
+      const st = S[id];
+      const singles = st.blocks[i].images.filter(Boolean).map(url => ({ type: 'single', url }));
+      st.blocks.splice(i, 1, ...singles);
+      changed(id, 'Grid split into separate images.');
+    }
+
+    async function runUploads(id, files, place) {
+      const st = S[id];
+      if (!files.length) return;
+      st.busy++; render(id);
+      let ok = 0, error = null;
+      for (const file of files) {
+        setStatus(id, 'Uploading ' + (ok + 1) + ' of ' + files.length + '...', '');
+        try { place(await uploadFileToR2(file)); ok++; }
+        catch (err) { error = err; break; }
+      }
+      st.busy--;
+      if (ok) st.dirty = true;
+      render(id);
+      if (error) setStatus(id, (ok ? ok + ' uploaded, then: ' : '') + error.message, 'err');
+      else setStatus(id, ok + ' image(s) uploaded. Click Save to publish.', '');
+    }
+    function uploadIntoGrid(id, blk, startSlot, files) {
+      return runUploads(id, files, (url) => {
+        let t = blk.images.findIndex((u, k) => !u && k >= startSlot);
+        if (t === -1) t = blk.images.findIndex(u => !u);
+        if (t === -1) {                     // grid is full: add a row
+          blk.rows++;
+          for (let k = 0; k < blk.cols; k++) blk.images.push(null);
+          t = blk.images.findIndex(u => !u);
         }
+        blk.images[t] = url;
+        if (!S[id].cover) S[id].cover = url;
+      });
+    }
+
+    // --- Drag and drop ---
+    function startDrag(e, payload, dragImageEl) {
+      DRAG = payload;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', 'move');   // Firefox needs data set to start a drag
+      if (dragImageEl) e.dataTransfer.setDragImage(dragImageEl, 20, 20);
+      document.body.classList.add('dragging');
+    }
+    function endDrag() {
+      DRAG = null;
+      document.body.classList.remove('dragging');
+      document.querySelectorAll('.over').forEach(n => n.classList.remove('over'));
+    }
+    document.addEventListener('dragend', endDrag);
+    // Stop the browser from opening a dropped image as a new page
+    document.addEventListener('dragover', e => { if (DRAG) e.preventDefault(); });
+    document.addEventListener('drop', e => { if (DRAG) { e.preventDefault(); endDrag(); } });
+
+    function dropTarget(node, accepts, onDrop) {
+      node.addEventListener('dragover', e => {
+        if (DRAG && accepts(DRAG)) { e.preventDefault(); e.stopPropagation(); node.classList.add('over'); }
+      });
+      node.addEventListener('dragleave', e => { if (!node.contains(e.relatedTarget)) node.classList.remove('over'); });
+      node.addEventListener('drop', e => {
+        if (!DRAG || !accepts(DRAG)) return;
+        e.preventDefault(); e.stopPropagation();
+        const d = DRAG;
+        onDrop(d);
+        endDrag();
+      });
+    }
+
+    // --- Rendering ---
+    function imageTile(id, loc, url, wide) {
+      const st = S[id];
+      const tile = el('div', { class: 'tile' + (wide ? ' wide' : '') });
+      const img = el('img', { src: url, alt: '', draggable: 'true' });
+      img.addEventListener('error', () => tile.classList.add('broken'));
+      img.addEventListener('dragstart', e => startDrag(e, { kind: 'img', id, loc }, img));
+      tile.append(img, el('div', { class: 'missing', text: 'Image file not found. Remove it with ✕.' }));
+      if (url === st.cover) tile.append(el('span', { class: 'cover-badge', text: 'Cover' }));
+
+      const bar = el('div', { class: 'tile-bar' });
+      if (loc.s !== null) {
+        const n = st.blocks[loc.b].images.length;
+        bar.append(el('button', { type: 'button', title: 'Move left', text: '◀', disabled: loc.s === 0, onclick: () => shiftSlot(id, loc, -1) }));
+        bar.append(el('button', { type: 'button', title: 'Move right', text: '▶', disabled: loc.s === n - 1, onclick: () => shiftSlot(id, loc, 1) }));
+      }
+      bar.append(el('button', { type: 'button', class: url === st.cover ? 'on' : '', title: url === st.cover ? 'This is the cover' : 'Use as cover', text: '★', onclick: () => setCover(id, url) }));
+      bar.append(el('button', { type: 'button', title: 'Remove image', text: '✕', onclick: () => removeImage(id, loc) }));
+      tile.append(bar);
+
+      dropTarget(tile, d => d.kind === 'img' && d.id === id, () => dropImageOn(id, loc));
+      return tile;
+    }
+
+    function emptySlot(id, i, s) {
+      const blk = S[id].blocks[i];
+      const tile = el('div', { class: 'tile empty' },
+        mini('+ Add image', 'Upload one or more images into this grid', async () => uploadIntoGrid(id, blk, s, await pickFiles(true))));
+      dropTarget(tile, d => d.kind === 'img' && d.id === id, () => dropImageOn(id, { b: i, s }));
+      return tile;
+    }
+
+    function gapZone(id, pos) {
+      const z = el('div', { class: 'dz', title: 'Drop here' });
+      dropTarget(z, d => d.id === id, d => (d.kind === 'blk' ? moveBlockTo(id, d.b, pos) : dropImageAt(id, pos)));
+      return z;
+    }
+
+    const PRESETS = ['1x2', '1x3', '1x4', '2x2', '2x3', '3x2', '3x3', '2x4'];
+
+    function blockCard(id, b, i) {
+      const st = S[id];
+      const card = el('div', { class: 'blk' });
+      const handle = el('span', { class: 'handle', title: 'Drag to move this block', draggable: 'true', text: '⠿' });
+      handle.addEventListener('dragstart', e => startDrag(e, { kind: 'blk', id, b: i }, card));
+
+      const head = el('div', { class: 'blk-head' }, handle);
+      if (b.type === 'single') head.append(el('span', { class: 'blk-label', text: 'Image' }));
+      if (b.type === 'embed') head.append(el('span', { class: 'blk-label', text: 'Embed' }));
+      if (b.type === 'grid') {
+        head.append(el('span', { class: 'blk-label', text: 'Grid' }));
+        const rows = el('input', { type: 'number', min: '1', max: '10', value: b.rows, title: 'Rows' });
+        const cols = el('input', { type: 'number', min: '1', max: '6', value: b.cols, title: 'Columns' });
+        rows.addEventListener('change', () => setLayout(id, i, rows.value, b.cols));
+        cols.addEventListener('change', () => setLayout(id, i, b.rows, cols.value));
+        const preset = el('select', { title: 'Layout presets (rows × columns)' }, el('option', { value: '', text: 'Presets…' }));
+        PRESETS.forEach(p => { const [r, c] = p.split('x'); preset.append(el('option', { value: p, text: r + ' × ' + c })); });
+        preset.addEventListener('change', () => { if (preset.value) { const [r, c] = preset.value.split('x'); setLayout(id, i, r, c); } });
+        const gap = el('select', { title: 'Space between images' });
+        [['0', 'No spacing'], ['0.5', 'Tight'], ['1.5', 'Normal'], ['3', 'Wide']].forEach(([v, t]) => {
+          gap.append(el('option', { value: v, text: t, selected: Number(v) === Number(b.gap ?? 1.5) }));
+        });
+        gap.addEventListener('change', () => { b.gap = Number(gap.value); changed(id); });
+        head.append(rows, el('span', { text: 'rows ×' }), cols, el('span', { text: 'columns' }), preset, gap,
+          mini('Split up', 'Turn this grid back into separate full-width images', () => splitGrid(id, i)));
+      }
+      head.append(el('span', { class: 'grow' }),
+        mini('↑', 'Move up', () => moveBlock(id, i, i - 1), { disabled: i === 0 }),
+        mini('↓', 'Move down', () => moveBlock(id, i, i + 1), { disabled: i === st.blocks.length - 1 }),
+        mini('Remove', 'Remove this whole block', () => removeBlock(id, i), { class: 'mini danger' }));
+      card.append(head);
+
+      if (b.type === 'single') card.append(imageTile(id, { b: i, s: null }, b.url, true));
+      if (b.type === 'grid') {
+        const g = el('div', { class: 'grid-edit' });
+        g.style.gridTemplateColumns = 'repeat(' + b.cols + ', 1fr)';
+        b.images.forEach((url, s) => g.append(url ? imageTile(id, { b: i, s }, url, false) : emptySlot(id, i, s)));
+        card.append(g);
+      }
+      if (b.type === 'embed') {
+        const ta = el('textarea', { class: 'embed-code', rows: '3', placeholder: 'Paste iframe embed code here. An empty embed is dropped when you save.' });
+        ta.value = b.code || '';
+        ta.addEventListener('input', () => { b.code = ta.value; S[id].dirty = true; setStatus(id, 'Unsaved changes.', ''); });
+        card.append(ta);
+      }
+      return card;
+    }
+
+    function render(id) {
+      const st = S[id];
+      const root = document.getElementById('layout-' + id);
+      root.replaceChildren();
+      root.classList.toggle('busy', st.busy > 0);
+      if (!st.blocks.length) {
+        root.append(el('div', { class: 'layout-empty', text: 'No images yet. Use “+ Add images” or “+ Add grid” below.' }));
+      } else {
+        root.append(gapZone(id, 0));
+        st.blocks.forEach((b, i) => { root.append(blockCard(id, b, i), gapZone(id, i + 1)); });
+      }
+      const p = panel(id);
+      const prev = p.querySelector('.f-cover-preview');
+      if (st.cover) prev.src = st.cover; else prev.removeAttribute('src');
+      p.querySelector('.f-save').disabled = st.busy > 0;
+    }
+
+    async function save(id) {
+      const st = S[id];
+      const btn = panel(id).querySelector('.f-save');
+      if (!st.title.trim()) return setStatus(id, 'The project needs a title.', 'err');
+      btn.disabled = true;
+      setStatus(id, 'Saving...', '');
+      try {
+        let res;
+        try {
+          res = await fetch('/api/projects/' + id, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ title: st.title, description: st.description, cover_image: st.cover, blocks: st.blocks })
+          });
+        } catch (e) {
+          throw new Error("Couldn't reach your server. Check your internet connection and click Save again. Your changes are still here.");
+        }
+        let data = {};
+        try { data = await res.json(); } catch (e) {}
+        if (!res.ok) throw new Error(data.error || ('Save failed: the server returned error ' + res.status + '. Your changes are still here, so try again.'));
+
+        ORIGINAL[id] = Object.assign({}, ORIGINAL[id], { title: st.title, description: st.description, cover_image: data.cover_image, blocks: data.blocks });
+        st.blocks = clone(data.blocks);
+        st.cover = data.cover_image;
+        st.dirty = false;
+        document.getElementById('rowtitle-' + id).textContent = st.title;
+        document.getElementById('thumb-' + id).src = st.cover;
+        render(id);
+        setStatus(id, 'Saved. Your site is updated.', 'ok');
+      } catch (err) {
+        setStatus(id, err.message, 'err');
+      } finally {
+        btn.disabled = st.busy > 0;
+      }
+    }
+
+    // --- Wire up each edit panel ---
+    document.querySelectorAll('.edit-panel').forEach(p => {
+      const id = p.dataset.id;
+      p.querySelector('.f-title').addEventListener('input', e => { S[id].title = e.target.value; S[id].dirty = true; });
+      p.querySelector('.f-desc').addEventListener('input', e => { S[id].description = e.target.value; S[id].dirty = true; });
+      p.querySelector('.f-cover-upload').addEventListener('click', async () => {
+        const files = await pickFiles(false);
+        await runUploads(id, files, url => { S[id].cover = url; });
+      });
+      p.querySelector('.f-add-images').addEventListener('click', async () => {
+        const files = await pickFiles(true);
+        await runUploads(id, files, url => {
+          S[id].blocks.push({ type: 'single', url });
+          if (!S[id].cover) S[id].cover = url;
+        });
+      });
+      p.querySelector('.f-add-grid').addEventListener('click', () => {
+        S[id].blocks.push({ type: 'grid', rows: 1, cols: 2, gap: 1.5, images: [null, null] });
+        changed(id, 'Empty grid added at the bottom. Drag images into it or use “+ Add image” in a slot.');
+      });
+      p.querySelector('.f-add-embed').addEventListener('click', () => {
+        S[id].blocks.push({ type: 'embed', code: '' });
+        changed(id, 'Embed added at the bottom. Paste the iframe code into it.');
+      });
+      p.querySelector('.f-save').addEventListener('click', () => save(id));
+      p.querySelector('.f-cancel').addEventListener('click', () => {
+        if (S[id].dirty && !confirm('Discard your unsaved changes to this project?')) return;
+        resetState(id);
+        render(id);
+        setStatus(id, '');
+        p.classList.remove('active');
       });
     });
 
-    function toggleEdit(id) { document.getElementById('edit-' + id).classList.toggle('active'); }
+    function toggleEdit(id) {
+      id = String(id);
+      const p = panel(id);
+      const opening = !p.classList.contains('active');
+      if (opening) {
+        if (!S[id]) resetState(id);
+        render(id);
+      }
+      p.classList.toggle('active');
+    }
+
+    window.addEventListener('beforeunload', e => {
+      if (Object.values(S).some(st => st.dirty || st.busy)) { e.preventDefault(); e.returnValue = ''; }
+    });
   </script>
 </body>
 </html>

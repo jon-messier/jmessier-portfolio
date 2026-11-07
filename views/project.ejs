@@ -28,7 +28,7 @@
           <% if (block.type === 'single') { %>
             <div class="block-single"><img src="<%= block.url %>" onclick="openLightbox(this.src)" oncontextmenu="return false;"></div>
           <% } else if (block.type === 'grid') { %>
-            <div class="block-grid" data-cols="<%= block.cols %>" style="--cols: <%= block.cols %>; gap: <%= block.gap %>rem;">
+            <div class="block-grid" data-cols="<%= block.cols %>" data-gap="<%= block.gap %>">
               <% block.images.forEach(function(img) { if (img) { %><img src="<%= img %>" onclick="openLightbox(this.src)" oncontextmenu="return false;"><% } }); %>
             </div>
           <% } else if (block.type === 'embed') { %>

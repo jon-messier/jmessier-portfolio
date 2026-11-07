@@ -35,6 +35,15 @@ main { max-width: 1100px; margin: 0 auto; padding: 3rem 1.5rem 6rem; }
 .project-header h1 { font-size: 2.5rem; font-weight: 600; margin-bottom: 1rem; }
 .block-single img { width: 100%; height: auto; border-radius: 8px; cursor: zoom-in; display: block; margin-bottom: 2rem; }
 .block-grid { display: grid; gap: 1.5rem; grid-template-columns: repeat(2, 1fr); margin-bottom: 2rem; }
+/* Grid columns and spacing, chosen in the admin layout editor */
+.block-grid[data-cols="1"] { grid-template-columns: 1fr; }
+.block-grid[data-cols="3"] { grid-template-columns: repeat(3, 1fr); }
+.block-grid[data-cols="4"] { grid-template-columns: repeat(4, 1fr); }
+.block-grid[data-cols="5"] { grid-template-columns: repeat(5, 1fr); }
+.block-grid[data-cols="6"] { grid-template-columns: repeat(6, 1fr); }
+.block-grid[data-gap="0"] { gap: 0; }
+.block-grid[data-gap="0.5"] { gap: 0.5rem; }
+.block-grid[data-gap="3"] { gap: 3rem; }
 .block-grid img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 8px; cursor: zoom-in; transition: opacity 0.2s; }
 .block-grid img:hover { opacity: 0.8; }
 .block-embed { width: 100%; margin: 2rem 0; border-radius: 8px; overflow: hidden; background: #000; }
@@ -73,7 +82,9 @@ main { max-width: 1100px; margin: 0 auto; padding: 3rem 1.5rem 6rem; }
   nav ul { flex-direction: column; align-items: center; gap: 1.5rem; padding: 1rem 0; }
   .grid { grid-template-columns: 1fr; gap: 3rem; }
   .project-card .thumb { aspect-ratio: auto; min-height: 250px; }
-  .block-grid { grid-template-columns: 1fr; }
+  /* On phones, grids wider than 2 columns drop to 2 so images stay a usable size */
+  .block-grid[data-cols] { grid-template-columns: repeat(2, 1fr); }
+  .block-grid[data-cols="1"] { grid-template-columns: 1fr; }
   .project-header h1 { font-size: 2rem; }
   .block-embed iframe { min-height: 400px; }
   .carousel-item { flex: 0 0 240px; }

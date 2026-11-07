@@ -82,11 +82,49 @@ const safeParseBlocks = (blocksData) => {
       parsed = JSON.parse(parsed);
     }
     
-    return Array.isArray(parsed) ? parsed : [];
+    return normalizeBlocks(parsed);
   } catch (err) {
     console.error("Failed to parse blocks:", err);
     return [];
   }
+};
+
+// Helper: Clean up a project's layout so only valid blocks get saved or shown.
+//   { type: 'single', url }
+//   { type: 'grid', rows, cols, gap, images: [url or null, ...] }  (null = empty slot)
+//   { type: 'embed', code }
+const isImageUrl = (u) => typeof u === 'string' && /^https?:\/\//i.test(u);
+const clampInt = (v, min, max, fallback) => {
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
+};
+const normalizeBlocks = (raw) => {
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  for (const b of raw) {
+    if (!b || typeof b !== 'object') continue;
+    if (b.type === 'single' && isImageUrl(b.url)) {
+      out.push({ type: 'single', url: b.url });
+    } else if (b.type === 'grid' && Array.isArray(b.images)) {
+      const images = b.images.map(u => (isImageUrl(u) ? u : null));
+      const cols = clampInt(b.cols, 1, 6, 2);
+      // Never drop images: add rows if there are more images than slots
+      const rows = Math.max(clampInt(b.rows, 1, 10, 1), Math.ceil(images.length / cols));
+      while (images.length < rows * cols) images.push(null);
+      const gap = Number.isFinite(Number(b.gap)) ? Math.min(4, Math.max(0, Number(b.gap))) : 1.5;
+      out.push({ type: 'grid', rows, cols, gap, images });
+    } else if (b.type === 'embed' && typeof b.code === 'string' && b.code.trim()) {
+      out.push({ type: 'embed', code: b.code.trim() });
+    }
+  }
+  return out;
+};
+const firstImage = (blocks) => {
+  for (const b of blocks) {
+    if (b.type === 'single') return b.url;
+    if (b.type === 'grid') { const img = b.images.find(Boolean); if (img) return img; }
+  }
+  return '';
 };
 
 // 4. API Route for Direct-to-R2 Upload
@@ -188,15 +226,11 @@ app.post('/admin/add', async (req, res) => {
   const { title, blocks } = req.body;
   try {
     // Safely parse the string sent from the browser into a real array
-    let parsedBlocks = [];
-    if (blocks) {
-      const temp = JSON.parse(blocks);
-      if (Array.isArray(temp)) parsedBlocks = temp;
-    }
+    const parsedBlocks = normalizeBlocks(blocks ? JSON.parse(blocks) : []);
 
     await db.execute({
       sql: "INSERT INTO projects (title, cover_image, blocks) VALUES (?, ?, ?)",
-      args: [title, parsedBlocks.length > 0 ? parsedBlocks[0].url : '', JSON.stringify(parsedBlocks)]
+      args: [title, firstImage(parsedBlocks), JSON.stringify(parsedBlocks)]
     });
     res.redirect('/admin');
   } catch (err) { 
@@ -230,6 +264,30 @@ app.post('/admin/edit/:id', async (req, res) => {
   } catch (err) { 
     console.error(err);
     res.status(500).send("Error updating project: " + err.message); 
+  }
+});
+
+// Save from the admin layout editor (JSON in, JSON out, so the page can show real errors)
+app.post('/api/projects/:id', async (req, res) => {
+  if (!req.session.loggedIn) {
+    return res.status(401).json({ error: 'Your login expired. Open the login page in a new tab, log in, then click Save again. Your changes are still on this page.' });
+  }
+  const { title, description, blocks, cover_image } = req.body || {};
+  if (!title || !String(title).trim()) return res.status(400).json({ error: 'The project needs a title.' });
+
+  const cleanBlocks = normalizeBlocks(blocks);
+  const cover = isImageUrl(cover_image) ? cover_image : firstImage(cleanBlocks);
+
+  try {
+    const result = await db.execute({
+      sql: `UPDATE projects SET title = ?, description = ?, blocks = ?, cover_image = ? WHERE id = ?`,
+      args: [String(title).trim(), description || '', JSON.stringify(cleanBlocks), cover, req.params.id]
+    });
+    if (result.rowsAffected === 0) return res.status(404).json({ error: 'This project no longer exists.' });
+    res.json({ ok: true, blocks: cleanBlocks, cover_image: cover });
+  } catch (err) {
+    console.error("Project save error:", err);
+    res.status(500).json({ error: 'The database rejected the save: ' + err.message });
   }
 });
 
