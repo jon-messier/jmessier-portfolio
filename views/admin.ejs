@@ -72,8 +72,8 @@
           <div class="form-group"><label>Add New Images</label><input type="file" name="new_images" multiple accept="image/*"></div>
           <div class="form-group" style="border-top: 1px solid #444; padding-top: 1rem;"><label>Add Embed (FlipSnack/YouTube)</label><textarea name="new_embed_code" rows="2" placeholder="Paste iframe code..."></textarea></div>
           
-          <!-- CRITICAL FIX: Single quotes around the EJS tag here -->
-          <input type="hidden" name="blocks_json" value='<%= project.blocks %>'>
+          <!-- Convert the actual array to a Base64 string safely -->
+          <input type="hidden" name="blocks_json_base64" value="<%= Buffer.from(JSON.stringify(project.blocks)).toString('base64') %>">
           
           <button type="submit" class="btn">Save Changes</button>
           <button type="button" class="btn btn-outline" onclick="toggleEdit('<%= project.id %>')">Cancel</button>

@@ -21,20 +21,28 @@
       <h1><%= project.title %></h1>
       <% if (project.description) { %><p style="color: #aaa; max-width: 600px; margin: 1rem auto 0;"><%= project.description %></p><% } %>
     </div>
+    
     <div class="project-blocks">
-      <% project.blocks.forEach(function(block) { %>
-        <% if (block.type === 'single') { %>
-          <div class="block-single"><img src="<%= block.url %>" onclick="openLightbox(this.src)" oncontextmenu="return false;"></div>
-        <% } else if (block.type === 'grid') { %>
-          <div class="block-grid" style="gap: <%= block.gap || 1.5 %>rem;">
-            <% block.images.forEach(function(img) { %><img src="<%= img %>" onclick="openLightbox(this.src)" oncontextmenu="return false;"><% }); %>
-          </div>
-        <% } else if (block.type === 'embed') { %>
-          <div class="block-embed"><%- block.code %></div>
-        <% } %>
-      <% }); %>
+      <!-- Strict Array check to prevent crashes -->
+      <% if (Array.isArray(project.blocks) && project.blocks.length > 0) { %>
+        <% project.blocks.forEach(function(block) { %>
+          <% if (block.type === 'single') { %>
+            <div class="block-single"><img src="<%= block.url %>" onclick="openLightbox(this.src)" oncontextmenu="return false;"></div>
+          <% } else if (block.type === 'grid') { %>
+            <div class="block-grid" style="gap: <%= block.gap || 1.5 %>rem;">
+              <% block.images.forEach(function(img) { %><img src="<%= img %>" onclick="openLightbox(this.src)" oncontextmenu="return false;"><% }); %>
+            </div>
+          <% } else if (block.type === 'embed') { %>
+            <div class="block-embed"><%- block.code %></div>
+          <% } %>
+        <% }); %>
+      <% } else { %>
+        <p style="text-align: center; color: #888; margin-top: 2rem;">No images have been added to this project yet.</p>
+      <% } %>
     </div>
+    
     <a href="#top" class="back-to-top">↑ Back to Top</a>
+    
     <% if (otherProjects && otherProjects.length > 0) { %>
       <div class="carousel-section">
         <h2 class="carousel-title">More Projects</h2>

@@ -1,6 +1,5 @@
 require('dotenv').config();
 const express = require('express');
-// 1. Updated Turso Driver (Serverless compatible)
 const { createClient } = require('@tursodatabase/serverless/compat');
 const multer = require('multer');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
@@ -11,7 +10,7 @@ const path = require('path');
 
 const app = express();
 
-// 2. Database Setup
+// 1. Database Setup
 const db = createClient({
   url: process.env.TURSO_DATABASE_URL,
   authToken: process.env.TURSO_AUTH_TOKEN,
@@ -33,7 +32,7 @@ db.batch([
   }
 }).catch(err => console.error("Database init error:", err));
 
-// 3. Cloudflare R2 Setup
+// 2. Cloudflare R2 Setup
 const s3 = new S3Client({
   region: 'auto',
   endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
@@ -58,7 +57,7 @@ const processAndUpload = async (fileBuffer) => {
   return `${process.env.R2_PUBLIC_URL}/${fileName}`;
 };
 
-// 4. Middleware
+// 3. Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.set('view engine', 'ejs');
@@ -76,7 +75,21 @@ const getSettings = async () => {
   return settings;
 };
 
-// 5. Public Routes
+// Helper: Guarantee an array is returned
+const safeParseBlocks = (blocksData) => {
+  if (!blocksData) return [];
+  try {
+    // Force to string in case Turso returns a buffer or object
+    const str = String(blocksData);
+    const parsed = JSON.parse(str);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    console.error("Failed to parse blocks:", err);
+    return [];
+  }
+};
+
+// 4. Public Routes
 app.get('/', async (req, res) => {
   try {
     const result = await db.execute("SELECT * FROM projects ORDER BY id DESC");
@@ -95,19 +108,8 @@ app.get('/project/:id', async (req, res) => {
     
     const project = result.rows[0];
     
-    // Safely parse the blocks. If it fails or is not an array, default to empty.
-    let parsedBlocks = [];
-    try {
-      if (project.blocks) {
-        const parsed = JSON.parse(project.blocks);
-        if (Array.isArray(parsed)) {
-          parsedBlocks = parsed;
-        }
-      }
-    } catch (err) {
-      console.error("Error parsing blocks for project:", project.id, err);
-    }
-    project.blocks = parsedBlocks;
+    // Force it to be an array here
+    project.blocks = safeParseBlocks(project.blocks);
     
     const allProjectsResult = await db.execute("SELECT id, title, cover_image FROM projects WHERE id != ? ORDER BY id ASC", [req.params.id]);
     const otherProjects = allProjectsResult.rows;
@@ -120,7 +122,7 @@ app.get('/project/:id', async (req, res) => {
   }
 });
 
-// 6. Admin Routes
+// 5. Admin Routes
 app.get('/login', (req, res) => res.render('login'));
 
 app.post('/login', async (req, res) => {
@@ -144,7 +146,14 @@ app.get('/admin', async (req, res) => {
   try {
     const result = await db.execute("SELECT * FROM projects ORDER BY id DESC");
     const settings = await getSettings();
-    res.render('admin', { projects: result.rows, logoUrl: settings.logo_url });
+    
+    // Clean up the blocks before sending to admin view
+    const cleanProjects = result.rows.map(p => {
+      p.blocks = safeParseBlocks(p.blocks);
+      return p;
+    });
+
+    res.render('admin', { projects: cleanProjects, logoUrl: settings.logo_url });
   } catch (err) {
     res.status(500).send("Error loading admin dashboard.");
   }
@@ -174,16 +183,18 @@ app.post('/admin/add', upload.array('images', 20), async (req, res) => {
 app.post('/admin/edit/:id', upload.fields([{ name: 'cover_image', maxCount: 1 }, { name: 'new_images', maxCount: 20 }]), async (req, res) => {
   if (!req.session.loggedIn) return res.redirect('/login');
   const { id } = req.params;
-  const { title, description, blocks_json } = req.body;
+  const { title, description, blocks_json_base64 } = req.body;
+  
   try {
     let blocks = [];
-    try {
-      if (blocks_json) {
-        const parsed = JSON.parse(blocks_json);
-        if (Array.isArray(parsed)) blocks = parsed;
+    
+    if (blocks_json_base64) {
+      try {
+        const decodedString = Buffer.from(blocks_json_base64, 'base64').toString('utf8');
+        blocks = safeParseBlocks(decodedString);
+      } catch (e) {
+        console.error("Failed to decode blocks base64:", e);
       }
-    } catch (e) {
-      console.error("Failed to parse blocks_json from admin form");
     }
 
     let coverImageUrl = '';
@@ -197,8 +208,12 @@ app.post('/admin/edit/:id', upload.fields([{ name: 'cover_image', maxCount: 1 },
 
     if (req.files['new_images'] && req.files['new_images'].length > 0) {
       for (const file of req.files['new_images']) {
-        const url = await processAndUpload(file.buffer);
-        blocks.push({ type: 'single', url: url });
+        try {
+          const url = await processAndUpload(file.buffer);
+          blocks.push({ type: 'single', url: url });
+        } catch (uploadError) {
+          console.error("Failed to upload image:", uploadError);
+        }
       }
     }
 
@@ -241,7 +256,7 @@ app.post('/admin/settings/logo', upload.single('logo'), async (req, res) => {
   res.redirect('/admin');
 });
 
-// 7. Vercel Export
+// 6. Vercel Export
 if (process.env.NODE_ENV !== 'production') {
   app.listen(3000, () => console.log('Server running at http://localhost:3000'));
 }
