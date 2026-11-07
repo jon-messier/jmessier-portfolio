@@ -133,7 +133,6 @@ main.contact-page { max-width: 680px; }
   .project-header { margin-bottom: 2rem; }
   .project-header h1 { font-size: clamp(1.45rem, 8vw, 1.9rem); }
   .project-description { font-size: 0.95rem; }
-  .block-grid[data-cols] { grid-template-columns: minmax(0, 1fr); }
   .block-embed iframe { min-height: 320px; }
   .carousel-item { flex: 0 0 200px; }
   .back-to-top { margin-top: 3rem; }
