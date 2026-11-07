@@ -1,0 +1,12 @@
+<header>
+  <nav id="main-nav">
+    <ul>
+      <li><a href="/" class="<%= active === 'portfolio' ? 'active' : '' %>">Portfolio</a></li>
+      <li><a href="/contact" class="<%= active === 'contact' ? 'active' : '' %>">Contact</a></li>
+    </ul>
+  </nav>
+  <a href="/" class="logo" aria-label="Jon Messier home">
+    <% if (logoUrl) { %><img src="<%= logoUrl %>" alt="JM Logo"><% } else { %><span class="logo-text">JM</span><% } %>
+  </a>
+  <button class="menu-toggle" aria-label="Menu" onclick="document.getElementById('main-nav').classList.toggle('active')">☰</button>
+</header>

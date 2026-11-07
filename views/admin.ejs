@@ -10,12 +10,13 @@
     body { font-family: 'Open Sans', sans-serif; background: #111; color: #fff; margin: 0; padding: 2rem; }
     .container { max-width: 900px; margin: 0 auto; }
     h1, h2, h3 { font-weight: 600; margin-top: 0; }
-    .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid #333; padding-bottom: 1rem; }
+    a { color: #8fa2ff; }
+    .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #333; padding-bottom: 1rem; }
     .card { background: #222; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid #333; }
     .form-group { margin-bottom: 1rem; }
     label { display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px; }
-    input[type="text"], textarea, input[type="file"] { width: 100%; padding: 10px; background: #111; border: 1px solid #444; color: #fff; border-radius: 4px; font-family: 'Open Sans'; }
-    .btn { background: #4361ee; color: #fff; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem; text-decoration: none; display: inline-block; }
+    input[type="text"], textarea, input[type="file"], select.input { width: 100%; padding: 10px; background: #111; border: 1px solid #444; color: #fff; border-radius: 4px; font-family: 'Open Sans'; }
+    .btn { background: #4361ee; color: #fff; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem; text-decoration: none; display: inline-block; font-family: inherit; }
     .btn:hover { background: #3049c4; }
     .btn:disabled { background: #555; cursor: not-allowed; }
     .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
@@ -23,31 +24,75 @@
     .btn-danger:hover { background: #ba2d39; }
     .btn-outline { background: transparent; border: 1px solid #555; color: #aaa; }
     .btn-outline:hover { background: #333; color: #fff; }
-    .project-row { display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: #1a1a1a; border: 1px solid #333; border-radius: 6px; margin-bottom: 1rem; }
-    .project-info { display: flex; align-items: center; gap: 1rem; }
-    .project-info img { width: 80px; height: 60px; object-fit: cover; border-radius: 4px; background: #111; }
-    .edit-panel { display: none; background: #1a1a1a; padding: 1.5rem; border-radius: 6px; border: 1px solid #4361ee; margin-bottom: 2rem; }
-    .edit-panel.active { display: block; }
-    .status-msg { font-size: 0.9rem; margin-top: 1rem; color: #4361ee; }
-    .status-msg.err { color: #e63946; }
+    .status-msg { font-size: 0.9rem; margin-top: 1rem; color: #8fa2ff; }
+    .status-msg:empty { display: none; }
+    .status-msg.err { color: #ff6b76; }
     .status-msg.ok { color: #52b788; }
     .hint { font-size: 0.8rem; color: #777; margin: -0.25rem 0 0.75rem; text-transform: none; letter-spacing: 0; }
 
-    /* Cover */
-    .cover-row { display: flex; gap: 1rem; align-items: center; }
-    .cover-row img { width: 120px; height: 90px; object-fit: cover; border-radius: 4px; background: #111; flex-shrink: 0; }
+    /* Tabs */
+    .tabs { display: flex; gap: 0.25rem; margin-bottom: 1.5rem; border-bottom: 1px solid #333; }
+    .tab-btn { background: none; border: none; border-bottom: 2px solid transparent; color: #aaa; padding: 0.6rem 1rem; font: inherit; font-weight: 600; cursor: pointer; margin-bottom: -1px; }
+    .tab-btn:hover { color: #fff; }
+    .tab-btn.active { color: #fff; border-bottom-color: #4361ee; }
+    .badge { display: inline-block; min-width: 1.4em; padding: 0 0.4em; border-radius: 10px; background: #e63946; color: #fff; font-size: 0.75rem; text-align: center; margin-left: 0.3rem; }
+    .badge:empty { display: none; }
 
-    /* Layout editor */
-    .layout-editor { display: flex; flex-direction: column; }
-    .layout-editor.busy { opacity: 0.6; pointer-events: none; }
-    .layout-empty { color: #777; font-size: 0.9rem; padding: 1.5rem; text-align: center; border: 1px dashed #444; border-radius: 6px; }
-    .blk { background: #111; border: 1px solid #333; border-radius: 6px; padding: 0.75rem; }
-    .blk-head { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.6rem; font-size: 0.85rem; color: #aaa; }
-    .blk-label { font-weight: 600; color: #ddd; }
+    /* New project drop zone */
+    .drop-zone { border: 2px dashed #444; border-radius: 8px; padding: 1.75rem 1rem; text-align: center; color: #aaa; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+    .drop-zone:hover, .drop-zone.file-over { border-color: #4361ee; background: rgba(67, 97, 238, 0.12); color: #fff; }
+    .drop-zone strong { color: #fff; }
+    .drop-list { font-size: 0.85rem; color: #ddd; margin-top: 0.5rem; }
+
+    /* Project list */
+    .list-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+    .project-item.drop-before { box-shadow: 0 -3px 0 #4361ee; }
+    .project-item.drop-after { box-shadow: 0 3px 0 #4361ee; }
+    .project-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; background: #1a1a1a; border: 1px solid #333; border-radius: 6px; margin-bottom: 1rem; }
+    .project-item.is-hidden .project-row { opacity: 0.6; }
+    .project-item.is-hidden .project-row:hover { opacity: 1; }
+    .project-info { display: flex; align-items: center; gap: 1rem; min-width: 0; flex: 1; }
+    .project-info img { width: 80px; height: 60px; object-fit: cover; border-radius: 4px; background: #111; flex-shrink: 0; }
+    .project-info h3 { margin: 0; font-size: 1.05rem; }
+    .row-meta { font-size: 0.8rem; color: #888; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+    .row-link { color: #8fa2ff; text-decoration: none; word-break: break-all; }
+    .row-link:hover { text-decoration: underline; }
+    .pill { font-size: 0.7rem; font-weight: 700; padding: 1px 8px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .pill-hidden { background: #444; color: #ddd; }
+    .project-item:not(.is-hidden) .pill-hidden { display: none; }
+    .row-note { font-size: 0.8rem; }
+    .row-note.ok { color: #52b788; }
+    .row-note.warn { color: #ffd166; }
+    .row-actions { display: flex; gap: 0.4rem; align-items: center; flex-shrink: 0; }
+    .row-actions form { margin: 0; }
     .handle { cursor: grab; font-size: 1.2rem; color: #777; padding: 0 0.3rem; user-select: none; line-height: 1; }
     .handle:hover { color: #fff; }
+
+    /* Edit panel */
+    .edit-panel { display: none; background: #1a1a1a; padding: 1.5rem; border-radius: 6px; border: 1px solid #4361ee; margin: -0.5rem 0 2rem; }
+    .edit-panel.active { display: block; }
+    .panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .panel-head h3 { margin: 0; font-size: 1rem; color: #aaa; }
+    .cover-row { display: flex; gap: 1rem; align-items: center; }
+    .cover-row img { width: 120px; height: 90px; object-fit: cover; border-radius: 4px; background: #111; flex-shrink: 0; }
+    .settings-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1rem; }
+    .settings-row select { width: 100%; padding: 8px; background: #111; border: 1px solid #444; color: #fff; border-radius: 4px; font-family: inherit; }
+    .bg-control { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+    .bg-control input[type="color"] { width: 44px; height: 34px; padding: 2px; background: #111; border: 1px solid #444; border-radius: 4px; cursor: pointer; }
+    .bg-control input[type="color"]:disabled { opacity: 0.35; cursor: not-allowed; }
+    .inline-check { display: inline-flex; align-items: center; gap: 0.4rem; text-transform: none; letter-spacing: 0; color: #ddd; margin: 0; font-size: 0.85rem; cursor: pointer; }
+
+    /* Layout editor */
+    .layout-editor { display: flex; flex-direction: column; border-radius: 6px; }
+    .layout-editor.busy { opacity: 0.6; pointer-events: none; }
+    .layout-editor.file-over { outline: 2px dashed #4361ee; outline-offset: 4px; }
+    .layout-empty { color: #777; font-size: 0.9rem; padding: 1.5rem; text-align: center; border: 1px dashed #444; border-radius: 6px; }
+    .blk { background: #111; border: 1px solid #333; border-radius: 6px; padding: 0.75rem; }
+    .blk.file-over { border-color: #4361ee; background: rgba(67, 97, 238, 0.12); }
+    .blk-head { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.6rem; font-size: 0.85rem; color: #aaa; }
+    .blk-label { font-weight: 600; color: #ddd; }
     .grow { flex: 1; }
-    .mini { background: #2a2a2a; color: #ddd; border: 1px solid #444; border-radius: 4px; padding: 4px 9px; font-size: 0.8rem; cursor: pointer; font-family: inherit; }
+    .mini { background: #2a2a2a; color: #ddd; border: 1px solid #444; border-radius: 4px; padding: 4px 9px; font-size: 0.8rem; cursor: pointer; font-family: inherit; text-decoration: none; display: inline-block; }
     .mini:hover { background: #3a3a3a; }
     .mini:disabled { opacity: 0.35; cursor: default; }
     .mini.danger:hover { background: #e63946; border-color: #e63946; color: #fff; }
@@ -74,10 +119,42 @@
     .tile.broken img { visibility: hidden; }
     .embed-code { width: 100%; font-family: monospace; font-size: 0.8rem; }
     .dz { height: 10px; margin: 2px 0; border-radius: 4px; transition: height 0.1s, background 0.1s; }
-    body.dragging .dz { height: 26px; background: rgba(67, 97, 238, 0.08); border: 1px dashed rgba(67, 97, 238, 0.5); }
-    .dz.over { background: rgba(67, 97, 238, 0.45) !important; }
+    body.dragging .dz, body.dragging-files .dz { height: 26px; background: rgba(67, 97, 238, 0.08); border: 1px dashed rgba(67, 97, 238, 0.5); }
+    .dz.over, .dz.file-over { background: rgba(67, 97, 238, 0.45) !important; }
     .editor-tools { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0 1.5rem; }
     .editor-actions { display: flex; gap: 0.5rem; align-items: center; border-top: 1px solid #333; padding-top: 1rem; }
+
+    /* Inbox */
+    .inbox-empty { color: #777; text-align: center; padding: 2rem; }
+    .msg { border: 1px solid #333; border-radius: 6px; margin-bottom: 0.5rem; background: #1a1a1a; }
+    .msg-head { display: grid; grid-template-columns: 12px 160px 1fr auto; gap: 0.75rem; align-items: center; width: 100%; background: none; border: none; color: #aaa; font: inherit; font-size: 0.9rem; text-align: left; padding: 0.75rem 1rem; cursor: pointer; }
+    .msg-head:hover { background: #222; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: transparent; }
+    .msg.unread .dot { background: #4361ee; }
+    .msg.unread .msg-from { color: #fff; font-weight: 700; }
+    .msg-from { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .msg-preview { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #888; }
+    .msg-date { font-size: 0.8rem; color: #777; white-space: nowrap; }
+    .msg-body { padding: 0 1rem 1rem 2.6rem; }
+    .msg-email { font-size: 0.85rem; margin-bottom: 0.75rem; }
+    .msg-text { white-space: pre-wrap; margin: 0 0 1rem; color: #ddd; line-height: 1.6; }
+    .msg-actions { display: flex; gap: 0.5rem; }
+    @media (max-width: 640px) { .msg-head { grid-template-columns: 12px 1fr auto; } .msg-preview { display: none; } }
+
+    /* Site settings */
+    .bg-settings { display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; }
+    .bg-settings input[type="color"] { width: 64px; height: 44px; padding: 2px; background: #111; border: 1px solid #444; border-radius: 4px; cursor: pointer; }
+    .bg-settings input[type="text"] { width: 110px; font-family: monospace; }
+    .bg-preview { flex: 1; min-width: 220px; padding: 1rem 1.25rem; border-radius: 6px; border: 1px solid #333; }
+    .bg-preview strong { display: block; }
+    .bg-preview span { font-size: 0.85rem; opacity: 0.6; }
+    .current-logo { max-height: 40px; max-width: 100px; filter: brightness(0) invert(1); }
+
+    @media (max-width: 700px) {
+      body { padding: 1rem; }
+      .settings-row { grid-template-columns: 1fr; }
+      .project-row { flex-wrap: wrap; }
+    }
   </style>
 </head>
 <body>
@@ -87,190 +164,174 @@
       <a href="/" class="btn btn-outline" target="_blank">View Site &rarr;</a>
     </div>
 
-    <!-- Logo Upload -->
-    <div class="card">
-      <h2>Global Settings</h2>
-      <div class="form-group" style="display:flex; align-items:center; gap:2rem;">
-        <div style="flex:1;">
-          <label>Site Logo (SVG/PNG)</label>
-          <input type="file" id="logoInput" accept="image/*">
-          <p id="logoStatus" class="status-msg"></p>
-        </div>
-        <div style="background:#111; padding:1rem; border-radius:8px; min-width:150px; text-align:center;">
-          <span style="font-size:0.8rem; color:#aaa; display:block; margin-bottom:0.5rem;">Current:</span>
-          <% if (logoUrl) { %><img src="<%= logoUrl %>" style="max-height: 40px; max-width: 100px; filter: brightness(0) invert(1);"><% } else { %><span style="font-size:1.5rem; font-weight:700;">JM</span><% } %>
-        </div>
-      </div>
+    <div class="tabs">
+      <button type="button" class="tab-btn" data-tab="projects">Projects</button>
+      <button type="button" class="tab-btn" data-tab="inbox">Inbox<span class="badge" id="unreadBadge"></span></button>
+      <button type="button" class="tab-btn" data-tab="settings">Site Settings</button>
     </div>
 
-    <!-- Add Project -->
-    <div class="card">
-      <h2>Add New Project</h2>
-      <form id="addForm">
-        <div class="form-group"><label>Project Title</label><input type="text" id="addTitle" required></div>
-        <div class="form-group"><label>Initial Images (First is Cover)</label><input type="file" id="addImages" multiple accept="image/*" required></div>
-        <button type="submit" class="btn" id="addBtn">Create Project</button>
-        <p id="addStatus" class="status-msg"></p>
-      </form>
-    </div>
-
-    <h2>Existing Projects</h2>
-    <% projects.forEach(function(project) { %>
-      <div class="project-row">
-        <div class="project-info"><img id="thumb-<%= project.id %>" src="<%= project.cover_image %>" alt=""><div><h3 style="margin:0;" id="rowtitle-<%= project.id %>"><%= project.title %></h3></div></div>
-        <div style="display:flex; gap:0.5rem;">
-          <button class="btn btn-sm" onclick="toggleEdit('<%= project.id %>')">Edit</button>
-          <form action="/admin/delete/<%= project.id %>" method="POST" onsubmit="return confirm('Delete this project? This can\'t be undone.');"><button type="submit" class="btn btn-danger btn-sm">Delete</button></form>
-        </div>
+    <!-- ===================== PROJECTS TAB ===================== -->
+    <section class="tab-panel" id="tab-projects">
+      <div class="card">
+        <h2>Add New Project</h2>
+        <form id="addForm">
+          <div class="form-group"><label for="addTitle">Project Title</label><input type="text" id="addTitle" required></div>
+          <div class="form-group">
+            <label>Images</label>
+            <div class="drop-zone" id="addDrop" tabindex="0">
+              <strong>Drag images here</strong> or click to choose. The first image becomes the cover.
+              <div class="drop-list" id="addList"></div>
+            </div>
+            <input type="file" id="addImages" multiple accept="image/*" hidden>
+          </div>
+          <button type="submit" class="btn" id="addBtn">Create Project</button>
+          <p id="addStatus" class="status-msg"></p>
+        </form>
       </div>
 
-      <!-- Edit Panel -->
-      <div id="edit-<%= project.id %>" class="edit-panel" data-id="<%= project.id %>">
-        <div class="form-group"><label>Title</label><input type="text" class="f-title"></div>
-        <div class="form-group"><label>Description</label><textarea class="f-desc" rows="3"></textarea></div>
+      <div class="list-head">
+        <h2>Existing Projects</h2>
+        <span class="status-msg" id="orderStatus" style="margin:0;"></span>
+      </div>
+      <p class="hint" style="margin-top:-0.5rem;">Drag ⠿ or use the arrows to set the order projects appear on your homepage. Hidden projects stay here but don't appear on the live site.</p>
 
-        <div class="form-group">
-          <label>Cover Image</label>
-          <p class="hint">Shown on the homepage. Click ★ on any image below to use it, or upload a different one.</p>
-          <div class="cover-row">
-            <img class="f-cover-preview" alt="">
-            <button type="button" class="mini f-cover-upload">Upload a different cover…</button>
+      <div id="projectList">
+      <% projects.forEach(function(project) { %>
+        <div class="project-item <%= project.hidden ? 'is-hidden' : '' %>" data-id="<%= project.id %>">
+          <div class="project-row">
+            <span class="handle row-handle" draggable="true" title="Drag to reorder">⠿</span>
+            <div class="project-info">
+              <img class="row-thumb" src="<%= project.cover_image %>" alt="">
+              <div style="min-width:0;">
+                <h3 class="row-title"><%= project.title %></h3>
+                <div class="row-meta">
+                  <a class="row-link" href="/project/<%= project.slug %>" target="_blank">/project/<%= project.slug %></a>
+                  <span class="pill pill-hidden">Hidden</span>
+                  <span class="row-note"></span>
+                </div>
+              </div>
+            </div>
+            <div class="row-actions">
+              <button type="button" class="mini f-up" title="Move up">↑</button>
+              <button type="button" class="mini f-down" title="Move down">↓</button>
+              <button type="button" class="btn btn-sm btn-outline f-visibility"><%= project.hidden ? 'Show' : 'Hide' %></button>
+              <button type="button" class="btn btn-sm f-edit">Edit</button>
+              <form action="/admin/delete/<%= project.id %>" method="POST" onsubmit="return confirm('Delete this project? This can\'t be undone. To keep it but take it off the site, use Hide instead.');"><button type="submit" class="btn btn-danger btn-sm">Delete</button></form>
+            </div>
+          </div>
+
+          <div class="edit-panel" id="edit-<%= project.id %>" data-id="<%= project.id %>">
+            <div class="panel-head">
+              <h3>Editing project</h3>
+              <button type="button" class="mini f-collapse" title="Hide this editor. Unsaved changes are kept until you leave the page.">Collapse ▲</button>
+            </div>
+            <div class="form-group"><label>Title</label><input type="text" class="f-title"></div>
+            <div class="form-group"><label>Description</label><textarea class="f-desc" rows="3"></textarea></div>
+
+            <div class="form-group">
+              <label>Cover Image</label>
+              <p class="hint">Shown on the homepage. Click ★ on any image below to use it, or upload a different one.</p>
+              <div class="cover-row">
+                <img class="f-cover-preview" alt="">
+                <button type="button" class="mini f-cover-upload">Upload a different cover…</button>
+              </div>
+            </div>
+
+            <div class="settings-row">
+              <div>
+                <label>Page Width</label>
+                <select class="f-width" title="How much of the page this project's images take up"></select>
+              </div>
+              <div>
+                <label>Space Between Images</label>
+                <select class="f-gap"></select>
+              </div>
+              <div>
+                <label>Background</label>
+                <div class="bg-control">
+                  <label class="inline-check"><input type="checkbox" class="f-bg-default"> Site default</label>
+                  <input type="color" class="f-bg" title="This project's background color">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:0;">
+              <label>Layout</label>
+              <p class="hint">Drag images by the picture and blocks by ⠿. Drop an image on another image to swap, into a grid slot, or onto a blue bar to make it its own row. You can also drag image files from your computer right into the layout or into a grid. Nothing is saved until you click Save.</p>
+            </div>
+            <div class="layout-editor" id="layout-<%= project.id %>"></div>
+
+            <div class="editor-tools">
+              <button type="button" class="mini f-add-images">+ Add images</button>
+              <button type="button" class="mini f-add-grid">+ Add grid</button>
+              <button type="button" class="mini f-add-embed">+ Add embed (FlipSnack/YouTube)</button>
+            </div>
+
+            <div class="editor-actions">
+              <button type="button" class="btn f-save">Save Changes</button>
+              <button type="button" class="btn btn-outline f-cancel">Cancel</button>
+            </div>
+            <p class="status-msg" id="status-<%= project.id %>"></p>
           </div>
         </div>
-
-        <div class="form-group" style="margin-bottom:0;">
-          <label>Layout</label>
-          <p class="hint">Drag images by the picture and blocks by ⠿. Drop an image on another image to swap them, into a grid slot, or onto a blue bar to make it its own row. Nothing is saved until you click Save.</p>
-        </div>
-        <div class="layout-editor" id="layout-<%= project.id %>"></div>
-
-        <div class="editor-tools">
-          <button type="button" class="mini f-add-images">+ Add images</button>
-          <button type="button" class="mini f-add-grid">+ Add grid</button>
-          <button type="button" class="mini f-add-embed">+ Add embed (FlipSnack/YouTube)</button>
-        </div>
-
-        <div class="editor-actions">
-          <button type="button" class="btn f-save">Save Changes</button>
-          <button type="button" class="btn btn-outline f-cancel">Cancel</button>
-        </div>
-        <p class="status-msg" id="status-<%= project.id %>"></p>
+      <% }); %>
       </div>
-    <% }); %>
+    </section>
+
+    <!-- ===================== INBOX TAB ===================== -->
+    <section class="tab-panel" id="tab-inbox" hidden>
+      <div class="card">
+        <h2>Inbox</h2>
+        <p class="hint">Messages sent through your site's Contact page. Click one to read it.</p>
+        <div id="inboxList"></div>
+        <p class="status-msg" id="inboxStatus"></p>
+      </div>
+    </section>
+
+    <!-- ===================== SITE SETTINGS TAB ===================== -->
+    <section class="tab-panel" id="tab-settings" hidden>
+      <div class="card">
+        <h2>Logo</h2>
+        <div class="form-group" style="display:flex; align-items:center; gap:2rem; margin:0;">
+          <div style="flex:1;">
+            <label for="logoInput">Site Logo (SVG/PNG)</label>
+            <input type="file" id="logoInput" accept="image/*">
+            <p id="logoStatus" class="status-msg"></p>
+          </div>
+          <div style="background:#000; padding:1rem; border-radius:8px; min-width:150px; text-align:center;">
+            <span style="font-size:0.8rem; color:#aaa; display:block; margin-bottom:0.5rem;">Current:</span>
+            <% if (logoUrl) { %><img src="<%= logoUrl %>" alt="Current logo" class="current-logo"><% } else { %><span style="font-size:1.5rem; font-weight:700;">JM</span><% } %>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Background Color</h2>
+        <p class="hint">Used on every page of your site. Projects with their own background color keep theirs. Text and the logo switch between light and dark automatically so they stay readable.</p>
+        <div class="bg-settings">
+          <input type="color" id="siteBgPicker">
+          <input type="text" id="siteBgHex" maxlength="7" spellcheck="false">
+          <div class="bg-preview" id="siteBgPreview"><strong>Preview</strong><span>How text looks on this background</span></div>
+        </div>
+        <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+          <button type="button" class="btn" id="siteBgSave">Save Background</button>
+          <button type="button" class="btn btn-outline" id="siteBgReset">Reset to Default</button>
+        </div>
+        <p class="status-msg" id="siteBgStatus"></p>
+      </div>
+    </section>
   </div>
 
-  <script id="projects-data" type="application/json"><%- JSON.stringify(projects).replace(/</g, '\\u003c') %></script>
+  <script id="admin-data" type="application/json"><%- JSON.stringify({ projects: projects, messages: messages, config: { siteBg: siteBg, defaultBg: defaultBg, pageWidths: pageWidths, blockGaps: blockGaps } }).replace(/</g, '\\u003c') %></script>
   <script>
-    // ---------- Uploading ----------
-    // Uploads one file straight to Cloudflare R2 and returns its public URL.
-    // Every failure is turned into a message that says which step broke.
-    async function uploadFileToR2(file) {
-      if (file.type && !file.type.startsWith('image/')) throw new Error(file.name + " isn't an image file.");
+    const DATA = JSON.parse(document.getElementById('admin-data').textContent);
+    const CONFIG = DATA.config;
+    const WIDTH_LABELS = { 640: 'Narrow (640px)', 860: 'Medium (860px)', 1100: 'Standard (1100px)', 1400: 'Wide (1400px)' };
+    const GAP_LABELS = { 0: 'None', 1: 'Tight', 2: 'Normal', 4: 'Wide' };
 
-      let res;
-      try {
-        res = await fetch('/api/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify({ filename: file.name, contentType: file.type })
-        });
-      } catch (e) {
-        throw new Error("Couldn't reach your server to start the upload. Check your internet connection and try again.");
-      }
-      let data = {};
-      try { data = await res.json(); } catch (e) {}
-      if (res.status === 401) throw new Error('Your login expired. Log in again in a new tab, then retry. Your unsaved changes are still here.');
-      if (!res.ok) throw new Error(data.error || ('The server failed to prepare the upload (error ' + res.status + ').'));
-
-      let put;
-      try {
-        put = await fetch(data.uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
-      } catch (e) {
-        throw new Error('Cloudflare R2 blocked the upload of ' + file.name + '. This almost always means the bucket\'s CORS policy doesn\'t allow this site yet. Nothing was saved for this image.');
-      }
-      if (!put.ok) throw new Error('Cloudflare R2 rejected ' + file.name + ' (error ' + put.status + ').');
-      return data.finalUrl;
-    }
-
-    function pickFiles(multiple) {
-      return new Promise(resolve => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.multiple = !!multiple;
-        input.addEventListener('change', () => resolve(Array.from(input.files || [])));
-        input.click();
-      });
-    }
-
-    // ---------- Logo ----------
-    document.getElementById('logoInput').addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const status = document.getElementById('logoStatus');
-      status.className = 'status-msg';
-      status.textContent = 'Uploading...';
-      try {
-        const finalUrl = await uploadFileToR2(file);
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/admin/settings/logo';
-        const input = document.createElement('input');
-        input.type = 'hidden'; input.name = 'logo_url'; input.value = finalUrl;
-        form.appendChild(input);
-        document.body.appendChild(form);
-        form.submit();
-      } catch (err) {
-        status.className = 'status-msg err';
-        status.textContent = err.message;
-      }
-    });
-
-    // ---------- New project ----------
-    document.getElementById('addForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const title = document.getElementById('addTitle').value;
-      const files = Array.from(document.getElementById('addImages').files);
-      const btn = document.getElementById('addBtn');
-      const status = document.getElementById('addStatus');
-      if (!files.length) return alert('Please select images.');
-
-      btn.disabled = true;
-      status.className = 'status-msg';
-      try {
-        const blocks = [];
-        for (let i = 0; i < files.length; i++) {
-          status.textContent = 'Uploading image ' + (i + 1) + ' of ' + files.length + '...';
-          blocks.push({ type: 'single', url: await uploadFileToR2(files[i]) });
-        }
-        status.textContent = 'Saving to database...';
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/admin/add';
-        [['title', title], ['blocks', JSON.stringify(blocks)]].forEach(([name, value]) => {
-          const input = document.createElement('input');
-          input.type = 'hidden'; input.name = name; input.value = value;
-          form.appendChild(input);
-        });
-        document.body.appendChild(form);
-        form.submit();
-      } catch (err) {
-        status.className = 'status-msg err';
-        status.textContent = err.message;
-        btn.disabled = false;
-      }
-    });
-
-    // ---------- Layout editor ----------
-    const ORIGINAL = {};
-    JSON.parse(document.getElementById('projects-data').textContent).forEach(p => { ORIGINAL[String(p.id)] = p; });
-    const S = {};          // working copy per project id
-    let DRAG = null;       // what's being dragged right now
-
-    const clone = (x) => JSON.parse(JSON.stringify(x));
-    const panel = (id) => document.getElementById('edit-' + id);
-
+    // ======================================================================
+    // Small helpers
+    // ======================================================================
     function el(tag, attrs, ...kids) {
       const node = document.createElement(tag);
       for (const [k, v] of Object.entries(attrs || {})) {
@@ -285,26 +346,362 @@
     }
     const mini = (text, title, onclick, opts) =>
       el('button', Object.assign({ type: 'button', class: 'mini', text, title, onclick }, opts || {}));
+    const clone = (x) => JSON.parse(JSON.stringify(x));
+    const fmtSize = (b) => (b >= 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB');
+    function setMsg(node, msg, kind) { node.className = 'status-msg' + (kind ? ' ' + kind : ''); node.textContent = msg || ''; }
+
+    // POST JSON to the server; turns every failure into a readable message
+    async function api(url, body) {
+      let res;
+      try {
+        res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify(body || {}) });
+      } catch (e) {
+        throw new Error("Couldn't reach your server. Check your internet connection and try again.");
+      }
+      let data = {};
+      try { data = await res.json(); } catch (e) {}
+      if (!res.ok) throw new Error(data.error || ('The server returned error ' + res.status + '. Please try again.'));
+      return data;
+    }
+
+    // ======================================================================
+    // Tabs
+    // ======================================================================
+    function showTab(name) {
+      if (!['projects', 'inbox', 'settings'].includes(name)) name = 'projects';
+      document.querySelectorAll('.tab-panel').forEach(p => { p.hidden = p.id !== 'tab-' + name; });
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+      if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
+    }
+    document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+    showTab(location.hash.slice(1));
+    window.addEventListener('hashchange', () => showTab(location.hash.slice(1)));   // Back/Forward and #links
+
+    // ======================================================================
+    // Images: shrink to WebP in the browser, then upload straight to Cloudflare R2.
+    // Each image is its own upload and never passes through Vercel, so there's
+    // no 4.5 MB limit per image or per batch.
+    // ======================================================================
+    const MAX_DIMENSION = 2560;   // longest side, in pixels
+    const WEBP_QUALITY = 0.85;    // 0 to 1. Higher = sharper but bigger files
+
+    async function decodeImage(file) {
+      try { return await createImageBitmap(file, { imageOrientation: 'from-image' }); }
+      catch (e) { return await createImageBitmap(file); }   // older browsers don't know that option
+    }
+
+    // Returns { file, before, after }. Leaves the file alone when converting wouldn't help.
+    async function optimizeImage(file) {
+      const type = (file.type || '').toLowerCase();
+      const same = { file, before: file.size, after: file.size };
+      if (type === 'image/svg+xml' || type === 'image/gif') return same;   // keep vectors and animations as they are
+      const isHeic = /heic|heif/.test(type) || /\.(heic|heif)$/i.test(file.name);
+      const heicError = new Error(file.name + " is an iPhone HEIC photo this browser can't read. Export it as JPG first, or upload it from Safari.");
+
+      let bitmap;
+      try { bitmap = await decodeImage(file); }
+      catch (e) { if (isHeic) throw heicError; return same; }
+
+      const scale = Math.min(1, MAX_DIMENSION / Math.max(bitmap.width, bitmap.height));
+      const w = Math.max(1, Math.round(bitmap.width * scale));
+      const h = Math.max(1, Math.round(bitmap.height * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
+      if (bitmap.close) bitmap.close();
+
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', WEBP_QUALITY));
+      if (!blob || blob.type !== 'image/webp') { if (isHeic) throw heicError; return same; }   // browser can't make WebP
+      if (blob.size >= file.size && !isHeic) return same;                                     // already smaller as-is
+      const out = new File([blob], file.name.replace(/\.[^.]+$/, '') + '.webp', { type: 'image/webp' });
+      return { file: out, before: file.size, after: out.size };
+    }
+
+    // Uploads one file to R2 exactly as given and returns its public URL.
+    async function uploadToR2(file) {
+      let res;
+      try {
+        res = await fetch('/api/upload', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+          body: JSON.stringify({ filename: file.name, contentType: file.type })
+        });
+      } catch (e) {
+        throw new Error("Couldn't reach your server to start the upload. Check your internet connection and try again.");
+      }
+      let data = {};
+      try { data = await res.json(); } catch (e) {}
+      if (res.status === 401) throw new Error('Your login expired. Log in again in a new tab, then retry. Your unsaved changes are still here.');
+      if (!res.ok) throw new Error(data.error || ('The server failed to prepare the upload (error ' + res.status + ').'));
+
+      let put;
+      try {
+        put = await fetch(data.uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+      } catch (e) {
+        throw new Error('Cloudflare R2 blocked the upload of ' + file.name + ". This almost always means the bucket's CORS policy doesn't allow this site yet. Nothing was saved for this image.");
+      }
+      if (!put.ok) throw new Error('Cloudflare R2 rejected ' + file.name + ' (error ' + put.status + ').');
+      return data.finalUrl;
+    }
+
+    // Shrink + upload. Returns { url, before, after }.
+    async function uploadImage(file) {
+      if (file.type && !file.type.startsWith('image/')) throw new Error(file.name + " isn't an image file.");
+      const opt = await optimizeImage(file);
+      const url = await uploadToR2(opt.file);
+      return { url, before: opt.before, after: opt.after };
+    }
+
+    function pickFiles(multiple) {
+      return new Promise(resolve => {
+        const input = document.createElement('input');
+        input.type = 'file'; input.accept = 'image/*'; input.multiple = !!multiple;
+        input.addEventListener('change', () => resolve(Array.from(input.files || [])));
+        input.click();
+      });
+    }
+
+    // ---- Files dragged in from your computer ----
+    const hasFiles = (e) => !!(e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files'));
+    const imageFiles = (list) => Array.from(list || []).filter(f => /^image\//.test(f.type) || /\.(heic|heif)$/i.test(f.name));
+    let fileDragDepth = 0;   // counts enter/leave pairs so highlights don't flicker
+    function endFileDrag() {
+      fileDragDepth = 0;
+      document.body.classList.remove('dragging-files');
+      document.querySelectorAll('.file-over').forEach(n => n.classList.remove('file-over'));
+    }
+    document.addEventListener('dragenter', e => { if (hasFiles(e)) { fileDragDepth++; document.body.classList.add('dragging-files'); } });
+    document.addEventListener('dragleave', e => { if (hasFiles(e) && --fileDragDepth <= 0) endFileDrag(); });
+    // Stop the browser from opening a file dropped outside a drop area
+    document.addEventListener('dragover', e => { if (hasFiles(e)) e.preventDefault(); });
+    document.addEventListener('drop', e => { if (hasFiles(e)) { e.preventDefault(); endFileDrag(); } });
+
+    function fileDropTarget(node, onFiles) {
+      node.addEventListener('dragover', e => {
+        if (!hasFiles(e)) return;
+        e.preventDefault(); e.stopPropagation();
+        e.dataTransfer.dropEffect = 'copy';
+        node.classList.add('file-over');
+      });
+      node.addEventListener('dragleave', e => { if (!node.contains(e.relatedTarget)) node.classList.remove('file-over'); });
+      node.addEventListener('drop', e => {
+        if (!hasFiles(e)) return;
+        e.preventDefault(); e.stopPropagation();
+        endFileDrag();
+        onFiles(imageFiles(e.dataTransfer.files), e.dataTransfer.files.length);
+      });
+    }
+
+    // ======================================================================
+    // Logo (uploaded as-is, never converted)
+    // ======================================================================
+    document.getElementById('logoInput').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const status = document.getElementById('logoStatus');
+      setMsg(status, 'Uploading...');
+      try {
+        const finalUrl = await uploadToR2(file);
+        const form = el('form', { method: 'POST', action: '/admin/settings/logo' }, el('input', { type: 'hidden', name: 'logo_url', value: finalUrl }));
+        document.body.appendChild(form);
+        form.submit();
+      } catch (err) {
+        setMsg(status, err.message, 'err');
+      }
+    });
+
+    // ======================================================================
+    // New project
+    // ======================================================================
+    (function () {
+      let chosen = [];
+      const drop = document.getElementById('addDrop');
+      const input = document.getElementById('addImages');
+      const list = document.getElementById('addList');
+      const status = document.getElementById('addStatus');
+      const btn = document.getElementById('addBtn');
+
+      function setChosen(files, skipped) {
+        chosen = files;
+        list.textContent = files.length
+          ? files.length + ' image' + (files.length === 1 ? '' : 's') + ' selected (' + fmtSize(files.reduce((s, f) => s + f.size, 0)) + '): ' + files.map(f => f.name).join(', ')
+          : '';
+        setMsg(status, skipped ? skipped + " file(s) skipped because they aren't images." : '', skipped ? 'err' : '');
+      }
+      drop.addEventListener('click', () => input.click());
+      drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } });
+      input.addEventListener('change', () => setChosen(imageFiles(input.files), input.files.length - imageFiles(input.files).length));
+      fileDropTarget(drop, (files, total) => setChosen(files, total - files.length));
+
+      document.getElementById('addForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const title = document.getElementById('addTitle').value.trim();
+        if (!title) return setMsg(status, 'Give the project a title first.', 'err');
+        if (!chosen.length) return setMsg(status, 'Add at least one image.', 'err');
+
+        btn.disabled = true;
+        try {
+          const blocks = [];
+          let before = 0, after = 0;
+          for (let i = 0; i < chosen.length; i++) {
+            setMsg(status, 'Optimizing and uploading image ' + (i + 1) + ' of ' + chosen.length + ' (' + chosen[i].name + ')...');
+            const up = await uploadImage(chosen[i]);
+            before += up.before; after += up.after;
+            blocks.push({ type: 'single', url: up.url });
+          }
+          setMsg(status, 'Saving the project... (images: ' + fmtSize(before) + ' → ' + fmtSize(after) + ')');
+          await api('/api/projects', { title, blocks });
+          location.hash = 'projects';
+          location.reload();
+        } catch (err) {
+          setMsg(status, err.message, 'err');
+          btn.disabled = false;
+        }
+      });
+    })();
+
+    // ======================================================================
+    // Project list: order + visibility
+    // ======================================================================
+    const projectList = document.getElementById('projectList');
+    const items = () => Array.from(projectList.querySelectorAll('.project-item'));
+    const itemFor = (id) => projectList.querySelector('.project-item[data-id="' + id + '"]');
+
+    function refreshArrows() {
+      const all = items();
+      all.forEach((it, i) => {
+        it.querySelector('.f-up').disabled = i === 0;
+        it.querySelector('.f-down').disabled = i === all.length - 1;
+      });
+    }
+    async function saveOrder() {
+      refreshArrows();
+      const status = document.getElementById('orderStatus');
+      setMsg(status, 'Saving order...');
+      try {
+        await api('/api/projects/order', { ids: items().map(it => Number(it.dataset.id)) });
+        setMsg(status, 'Order saved.', 'ok');
+      } catch (err) {
+        setMsg(status, err.message, 'err');
+      }
+    }
+    function rowNote(id, text, kind) {
+      const n = itemFor(id).querySelector('.row-note');
+      n.className = 'row-note' + (kind ? ' ' + kind : '');
+      n.textContent = text || '';
+    }
+
+    let ROWDRAG = null;
+    items().forEach(item => {
+      const id = item.dataset.id;
+      item.querySelector('.f-up').addEventListener('click', () => {
+        const prev = item.previousElementSibling;
+        if (prev) { projectList.insertBefore(item, prev); saveOrder(); }
+      });
+      item.querySelector('.f-down').addEventListener('click', () => {
+        const next = item.nextElementSibling;
+        if (next) { projectList.insertBefore(next, item); saveOrder(); }
+      });
+
+      const vis = item.querySelector('.f-visibility');
+      vis.addEventListener('click', async () => {
+        const hide = !item.classList.contains('is-hidden');
+        vis.disabled = true;
+        try {
+          await api('/api/projects/' + id + '/visibility', { hidden: hide });
+          item.classList.toggle('is-hidden', hide);
+          vis.textContent = hide ? 'Show' : 'Hide';
+          ORIGINAL[id].hidden = hide;
+          rowNote(id, hide ? 'Hidden from the live site.' : 'Visible on the live site.', 'ok');
+        } catch (err) {
+          rowNote(id, err.message, 'warn');
+        } finally {
+          vis.disabled = false;
+        }
+      });
+
+      item.querySelector('.f-edit').addEventListener('click', () => toggleEdit(id));
+
+      // Drag a row by its ⠿ handle to reorder
+      const handle = item.querySelector('.row-handle');
+      handle.addEventListener('dragstart', e => {
+        ROWDRAG = item;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', 'row');
+        e.dataTransfer.setDragImage(item.querySelector('.project-row'), 20, 20);
+      });
+      handle.addEventListener('dragend', () => {
+        ROWDRAG = null;
+        items().forEach(it => it.classList.remove('drop-before', 'drop-after'));
+      });
+      item.addEventListener('dragover', e => {
+        if (!ROWDRAG || ROWDRAG === item) return;
+        e.preventDefault();
+        const r = item.querySelector('.project-row').getBoundingClientRect();
+        const before = e.clientY < r.top + r.height / 2;
+        item.classList.toggle('drop-before', before);
+        item.classList.toggle('drop-after', !before);
+      });
+      item.addEventListener('dragleave', e => { if (!item.contains(e.relatedTarget)) item.classList.remove('drop-before', 'drop-after'); });
+      item.addEventListener('drop', e => {
+        if (!ROWDRAG || ROWDRAG === item) return;
+        e.preventDefault();
+        const before = item.classList.contains('drop-before');
+        item.classList.remove('drop-before', 'drop-after');
+        projectList.insertBefore(ROWDRAG, before ? item : item.nextElementSibling);
+        ROWDRAG = null;
+        saveOrder();
+      });
+    });
+    refreshArrows();
+
+    // ======================================================================
+    // Layout editor
+    // ======================================================================
+    const ORIGINAL = {};
+    DATA.projects.forEach(p => { ORIGINAL[String(p.id)] = p; });
+    const S = {};          // working copy per project id
+    let DRAG = null;       // image or block being dragged inside an editor
+
+    const panel = (id) => document.getElementById('edit-' + id);
+
+    function fillSelect(select, values, labels, current) {
+      select.replaceChildren();
+      values.forEach(v => select.append(el('option', { value: v, text: labels[v] || v, selected: Number(v) === Number(current) })));
+    }
 
     function resetState(id) {
       const o = ORIGINAL[id];
-      S[id] = { title: o.title || '', description: o.description || '', cover: o.cover_image || '', blocks: clone(o.blocks || []), dirty: false, busy: 0 };
+      S[id] = {
+        title: o.title || '', description: o.description || '', cover: o.cover_image || '',
+        blocks: clone(o.blocks || []),
+        width: o.content_width, gap: o.block_gap, bg: o.bg_color || '',
+        dirty: false, busy: 0
+      };
       const p = panel(id);
       p.querySelector('.f-title').value = S[id].title;
       p.querySelector('.f-desc').value = S[id].description;
+      fillSelect(p.querySelector('.f-width'), CONFIG.pageWidths, WIDTH_LABELS, S[id].width);
+      fillSelect(p.querySelector('.f-gap'), CONFIG.blockGaps, GAP_LABELS, S[id].gap);
+      syncBgControls(id);
     }
 
-    function setStatus(id, msg, kind) {
-      const s = document.getElementById('status-' + id);
-      s.className = 'status-msg' + (kind ? ' ' + kind : '');
-      s.textContent = msg || '';
+    function syncBgControls(id) {
+      const p = panel(id);
+      const useDefault = !S[id].bg;
+      p.querySelector('.f-bg-default').checked = useDefault;
+      const picker = p.querySelector('.f-bg');
+      picker.value = S[id].bg || CONFIG.siteBg;
+      picker.disabled = useDefault;
     }
+
+    function setStatus(id, msg, kind) { setMsg(document.getElementById('status-' + id), msg, kind); }
 
     function changed(id, msg) {
       S[id].dirty = true;
       render(id);
       setStatus(id, msg || 'Unsaved changes.', '');
     }
+    function touched(id) { S[id].dirty = true; setStatus(id, 'Unsaved changes.', ''); }
 
     function firstImage(blocks) {
       for (const b of blocks) {
@@ -387,7 +784,7 @@
       for (let k = 0; k < keep.length && overflow.length; k++) if (!keep[k]) keep[k] = overflow.shift();
       b.rows = rows; b.cols = cols; b.images = keep;
       if (overflow.length) st.blocks.splice(i + 1, 0, ...overflow.map(url => ({ type: 'single', url })));
-      changed(id, overflow.length ? overflow.length + ' image(s) didn\'t fit, so they were moved just below the grid.' : '');
+      changed(id, overflow.length ? overflow.length + " image(s) didn't fit, so they were moved just below the grid." : '');
     }
     function splitGrid(id, i) {
       const st = S[id];
@@ -396,24 +793,49 @@
       changed(id, 'Grid split into separate images.');
     }
 
-    async function runUploads(id, files, place) {
+    // Picks a grid shape (rows × columns) that fits n images neatly
+    function autoLayout(n) {
+      if (n <= 1) return [1, 1];
+      if (n <= 3) return [1, n];
+      if (n === 4) return [2, 2];
+      if (n <= 6) return [2, 3];
+      if (n <= 9) return [3, 3];
+      if (n <= 12) return [3, 4];
+      if (n <= 16) return [4, 4];
+      return [Math.ceil(n / 6), 6];
+    }
+
+    // Uploads files one at a time, calling place(url) for each, with progress in the status line
+    async function runUploads(id, files, place, startMsg) {
       const st = S[id];
       if (!files.length) return;
       st.busy++; render(id);
-      let ok = 0, error = null;
-      for (const file of files) {
-        setStatus(id, 'Uploading ' + (ok + 1) + ' of ' + files.length + '...', '');
-        try { place(await uploadFileToR2(file)); ok++; }
-        catch (err) { error = err; break; }
+      let ok = 0, before = 0, after = 0, error = null;
+      for (let k = 0; k < files.length; k++) {
+        setStatus(id, (startMsg ? startMsg + ' ' : '') + 'Optimizing and uploading ' + (k + 1) + ' of ' + files.length + ' (' + files[k].name + ')...', '');
+        try {
+          const up = await uploadImage(files[k]);
+          place(up.url);
+          if (!st.cover) st.cover = up.url;
+          ok++; before += up.before; after += up.after;
+          render(id);
+        } catch (err) { error = err; break; }
       }
       st.busy--;
       if (ok) st.dirty = true;
       render(id);
-      if (error) setStatus(id, (ok ? ok + ' uploaded, then: ' : '') + error.message, 'err');
-      else setStatus(id, ok + ' image(s) uploaded. Click Save to publish.', '');
+      const sizes = ok ? ' (' + fmtSize(before) + ' → ' + fmtSize(after) + ')' : '';
+      if (error) setStatus(id, (ok ? ok + ' uploaded' + sizes + ', then: ' : '') + error.message, 'err');
+      else setStatus(id, (startMsg ? startMsg + ' ' : '') + ok + ' image(s) uploaded' + sizes + '. Click Save to publish.', '');
     }
-    function uploadIntoGrid(id, blk, startSlot, files) {
-      return runUploads(id, files, (url) => {
+
+    function addSinglesAt(id, pos, files) {
+      let at = pos;
+      return runUploads(id, files, url => { S[id].blocks.splice(at++, 0, { type: 'single', url }); });
+    }
+
+    function fillGrid(blk, startSlot) {
+      return (url) => {
         let t = blk.images.findIndex((u, k) => !u && k >= startSlot);
         if (t === -1) t = blk.images.findIndex(u => !u);
         if (t === -1) {                     // grid is full: add a row
@@ -422,11 +844,22 @@
           t = blk.images.findIndex(u => !u);
         }
         blk.images[t] = url;
-        if (!S[id].cover) S[id].cover = url;
-      });
+      };
+    }
+    function uploadIntoGrid(id, blk, startSlot, files) {
+      return runUploads(id, files, fillGrid(blk, startSlot));
+    }
+    // Files dropped onto a grid: resize the grid to fit everything, then fill it
+    function dropFilesIntoGrid(id, blk, files) {
+      const existing = blk.images.filter(Boolean);
+      const [r, c] = autoLayout(existing.length + files.length);
+      blk.rows = r; blk.cols = c;
+      blk.images = existing.concat(Array(r * c - existing.length).fill(null));
+      S[id].dirty = true;
+      return runUploads(id, files, fillGrid(blk, 0), 'Grid set to ' + r + ' × ' + c + '.');
     }
 
-    // --- Drag and drop ---
+    // --- Moving things inside the editor (drag and drop) ---
     function startDrag(e, payload, dragImageEl) {
       DRAG = payload;
       e.dataTransfer.effectAllowed = 'move';
@@ -440,7 +873,7 @@
       document.querySelectorAll('.over').forEach(n => n.classList.remove('over'));
     }
     document.addEventListener('dragend', endDrag);
-    // Stop the browser from opening a dropped image as a new page
+    // Stop the browser from opening a dragged image as a new page
     document.addEventListener('dragover', e => { if (DRAG) e.preventDefault(); });
     document.addEventListener('drop', e => { if (DRAG) { e.preventDefault(); endDrag(); } });
 
@@ -493,6 +926,7 @@
     function gapZone(id, pos) {
       const z = el('div', { class: 'dz', title: 'Drop here' });
       dropTarget(z, d => d.id === id, d => (d.kind === 'blk' ? moveBlockTo(id, d.b, pos) : dropImageAt(id, pos)));
+      fileDropTarget(z, files => addSinglesAt(id, pos, files));
       return z;
     }
 
@@ -516,7 +950,7 @@
         const preset = el('select', { title: 'Layout presets (rows × columns)' }, el('option', { value: '', text: 'Presets…' }));
         PRESETS.forEach(p => { const [r, c] = p.split('x'); preset.append(el('option', { value: p, text: r + ' × ' + c })); });
         preset.addEventListener('change', () => { if (preset.value) { const [r, c] = preset.value.split('x'); setLayout(id, i, r, c); } });
-        const gap = el('select', { title: 'Space between images' });
+        const gap = el('select', { title: 'Space between images in this grid' });
         [['0', 'No spacing'], ['0.5', 'Tight'], ['1.5', 'Normal'], ['3', 'Wide']].forEach(([v, t]) => {
           gap.append(el('option', { value: v, text: t, selected: Number(v) === Number(b.gap ?? 1.5) }));
         });
@@ -530,18 +964,24 @@
         mini('Remove', 'Remove this whole block', () => removeBlock(id, i), { class: 'mini danger' }));
       card.append(head);
 
-      if (b.type === 'single') card.append(imageTile(id, { b: i, s: null }, b.url, true));
+      if (b.type === 'single') {
+        card.append(imageTile(id, { b: i, s: null }, b.url, true));
+        fileDropTarget(card, files => addSinglesAt(id, i + 1, files));
+      }
       if (b.type === 'grid') {
         const g = el('div', { class: 'grid-edit' });
         g.style.gridTemplateColumns = 'repeat(' + b.cols + ', 1fr)';
         b.images.forEach((url, s) => g.append(url ? imageTile(id, { b: i, s }, url, false) : emptySlot(id, i, s)));
         card.append(g);
+        card.title = 'Drop image files here to add them to this grid';
+        fileDropTarget(card, files => dropFilesIntoGrid(id, b, files));
       }
       if (b.type === 'embed') {
         const ta = el('textarea', { class: 'embed-code', rows: '3', placeholder: 'Paste iframe embed code here. An empty embed is dropped when you save.' });
         ta.value = b.code || '';
-        ta.addEventListener('input', () => { b.code = ta.value; S[id].dirty = true; setStatus(id, 'Unsaved changes.', ''); });
+        ta.addEventListener('input', () => { b.code = ta.value; touched(id); });
         card.append(ta);
+        fileDropTarget(card, files => addSinglesAt(id, i + 1, files));
       }
       return card;
     }
@@ -552,7 +992,7 @@
       root.replaceChildren();
       root.classList.toggle('busy', st.busy > 0);
       if (!st.blocks.length) {
-        root.append(el('div', { class: 'layout-empty', text: 'No images yet. Use “+ Add images” or “+ Add grid” below.' }));
+        root.append(el('div', { class: 'layout-empty', text: 'No images yet. Drag image files here, or use “+ Add images” or “+ Add grid” below.' }));
       } else {
         root.append(gapZone(id, 0));
         st.blocks.forEach((b, i) => { root.append(blockCard(id, b, i), gapZone(id, i + 1)); });
@@ -563,6 +1003,23 @@
       p.querySelector('.f-save').disabled = st.busy > 0;
     }
 
+    function openEditor(id) {
+      if (!S[id]) resetState(id);
+      render(id);
+      panel(id).classList.add('active');
+      itemFor(id).querySelector('.f-edit').textContent = 'Close';
+      rowNote(id, '');
+    }
+    function collapse(id) {
+      panel(id).classList.remove('active');
+      itemFor(id).querySelector('.f-edit').textContent = 'Edit';
+      if (S[id] && (S[id].dirty || S[id].busy)) rowNote(id, 'Unsaved changes. Click Edit to finish.', 'warn');
+    }
+    function toggleEdit(id) {
+      id = String(id);
+      if (panel(id).classList.contains('active')) collapse(id); else openEditor(id);
+    }
+
     async function save(id) {
       const st = S[id];
       const btn = panel(id).querySelector('.f-save');
@@ -570,29 +1027,24 @@
       btn.disabled = true;
       setStatus(id, 'Saving...', '');
       try {
-        let res;
-        try {
-          res = await fetch('/api/projects/' + id, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'same-origin',
-            body: JSON.stringify({ title: st.title, description: st.description, cover_image: st.cover, blocks: st.blocks })
-          });
-        } catch (e) {
-          throw new Error("Couldn't reach your server. Check your internet connection and click Save again. Your changes are still here.");
-        }
-        let data = {};
-        try { data = await res.json(); } catch (e) {}
-        if (!res.ok) throw new Error(data.error || ('Save failed: the server returned error ' + res.status + '. Your changes are still here, so try again.'));
-
-        ORIGINAL[id] = Object.assign({}, ORIGINAL[id], { title: st.title, description: st.description, cover_image: data.cover_image, blocks: data.blocks });
-        st.blocks = clone(data.blocks);
-        st.cover = data.cover_image;
-        st.dirty = false;
-        document.getElementById('rowtitle-' + id).textContent = st.title;
-        document.getElementById('thumb-' + id).src = st.cover;
-        render(id);
-        setStatus(id, 'Saved. Your site is updated.', 'ok');
+        const data = await api('/api/projects/' + id, {
+          title: st.title, description: st.description, cover_image: st.cover, blocks: st.blocks,
+          bg_color: st.bg, block_gap: st.gap, content_width: st.width
+        });
+        ORIGINAL[id] = Object.assign({}, ORIGINAL[id], {
+          title: st.title.trim(), description: st.description, cover_image: data.cover_image, blocks: data.blocks,
+          slug: data.slug, bg_color: data.bg_color, block_gap: data.block_gap, content_width: data.content_width
+        });
+        resetState(id);   // working copy now matches what was saved
+        const item = itemFor(id);
+        item.querySelector('.row-title').textContent = ORIGINAL[id].title;
+        if (data.cover_image) item.querySelector('.row-thumb').src = data.cover_image;
+        const link = item.querySelector('.row-link');
+        link.href = '/project/' + data.slug;
+        link.textContent = '/project/' + data.slug;
+        setStatus(id, '');
+        collapse(id);
+        rowNote(id, 'Saved. Your site is updated.', 'ok');
       } catch (err) {
         setStatus(id, err.message, 'err');
       } finally {
@@ -603,22 +1055,26 @@
     // --- Wire up each edit panel ---
     document.querySelectorAll('.edit-panel').forEach(p => {
       const id = p.dataset.id;
-      p.querySelector('.f-title').addEventListener('input', e => { S[id].title = e.target.value; S[id].dirty = true; });
-      p.querySelector('.f-desc').addEventListener('input', e => { S[id].description = e.target.value; S[id].dirty = true; });
+      p.querySelector('.f-title').addEventListener('input', e => { S[id].title = e.target.value; touched(id); });
+      p.querySelector('.f-desc').addEventListener('input', e => { S[id].description = e.target.value; touched(id); });
+      p.querySelector('.f-width').addEventListener('change', e => { S[id].width = Number(e.target.value); touched(id); });
+      p.querySelector('.f-gap').addEventListener('change', e => { S[id].gap = Number(e.target.value); touched(id); });
+      p.querySelector('.f-bg-default').addEventListener('change', e => {
+        S[id].bg = e.target.checked ? '' : p.querySelector('.f-bg').value;
+        syncBgControls(id); touched(id);
+      });
+      p.querySelector('.f-bg').addEventListener('input', e => { S[id].bg = e.target.value; touched(id); });
       p.querySelector('.f-cover-upload').addEventListener('click', async () => {
         const files = await pickFiles(false);
         await runUploads(id, files, url => { S[id].cover = url; });
       });
       p.querySelector('.f-add-images').addEventListener('click', async () => {
         const files = await pickFiles(true);
-        await runUploads(id, files, url => {
-          S[id].blocks.push({ type: 'single', url });
-          if (!S[id].cover) S[id].cover = url;
-        });
+        await addSinglesAt(id, S[id].blocks.length, files);
       });
       p.querySelector('.f-add-grid').addEventListener('click', () => {
         S[id].blocks.push({ type: 'grid', rows: 1, cols: 2, gap: 1.5, images: [null, null] });
-        changed(id, 'Empty grid added at the bottom. Drag images into it or use “+ Add image” in a slot.');
+        changed(id, 'Empty grid added at the bottom. Drag images or image files into it, or use “+ Add image” in a slot.');
       });
       p.querySelector('.f-add-embed').addEventListener('click', () => {
         S[id].blocks.push({ type: 'embed', code: '' });
@@ -630,24 +1086,120 @@
         resetState(id);
         render(id);
         setStatus(id, '');
-        p.classList.remove('active');
+        collapse(id);
+        rowNote(id, '');
       });
+      p.querySelector('.f-collapse').addEventListener('click', () => collapse(id));
+      // Image files dropped anywhere else in the layout get added at the end
+      fileDropTarget(document.getElementById('layout-' + id), files => addSinglesAt(id, S[id].blocks.length, files));
     });
-
-    function toggleEdit(id) {
-      id = String(id);
-      const p = panel(id);
-      const opening = !p.classList.contains('active');
-      if (opening) {
-        if (!S[id]) resetState(id);
-        render(id);
-      }
-      p.classList.toggle('active');
-    }
 
     window.addEventListener('beforeunload', e => {
       if (Object.values(S).some(st => st.dirty || st.busy)) { e.preventDefault(); e.returnValue = ''; }
     });
+
+    // ======================================================================
+    // Inbox
+    // ======================================================================
+    const MESSAGES = DATA.messages;
+    const inboxList = document.getElementById('inboxList');
+    const fmtDate = (iso) => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }); };
+
+    function updateUnread() {
+      const n = MESSAGES.filter(m => !m.is_read).length;
+      document.getElementById('unreadBadge').textContent = n ? String(n) : '';
+    }
+
+    function renderInbox() {
+      inboxList.replaceChildren();
+      updateUnread();
+      if (!MESSAGES.length) {
+        inboxList.append(el('div', { class: 'inbox-empty', text: 'No messages yet. Anything sent from your Contact page will show up here.' }));
+        return;
+      }
+      MESSAGES.forEach(m => {
+        const item = el('div', { class: 'msg' + (m.is_read ? '' : ' unread') });
+        const body = el('div', { class: 'msg-body', hidden: true },
+          el('div', { class: 'msg-email' }, el('a', { href: 'mailto:' + encodeURIComponent(m.email) + '?subject=' + encodeURIComponent('Re: your message'), text: m.email })),
+          el('p', { class: 'msg-text', text: m.message }),
+          el('div', { class: 'msg-actions' },
+            el('a', { class: 'mini', href: 'mailto:' + encodeURIComponent(m.email) + '?subject=' + encodeURIComponent('Re: your message'), text: 'Reply by email' }),
+            mini('Mark as unread', 'Show this as unread again', () => setRead(m, item, false)),
+            mini('Delete', 'Delete this message', () => deleteMessage(m, item), { class: 'mini danger' })));
+        const head = el('button', { type: 'button', class: 'msg-head', title: 'Open message' },
+          el('span', { class: 'dot' }),
+          el('span', { class: 'msg-from', text: m.name }),
+          el('span', { class: 'msg-preview', text: m.message.replace(/\s+/g, ' ').slice(0, 120) }),
+          el('span', { class: 'msg-date', text: fmtDate(m.created_at) }));
+        head.addEventListener('click', () => {
+          body.hidden = !body.hidden;
+          if (!body.hidden && !m.is_read) setRead(m, item, true);
+        });
+        item.append(head, body);
+        inboxList.append(item);
+      });
+    }
+
+    async function setRead(m, item, read) {
+      const prev = m.is_read;
+      m.is_read = read;
+      item.classList.toggle('unread', !read);
+      updateUnread();
+      try { await api('/api/messages/' + m.id + '/read', { read }); }
+      catch (err) {
+        m.is_read = prev; item.classList.toggle('unread', !prev); updateUnread();
+        setMsg(document.getElementById('inboxStatus'), err.message, 'err');
+      }
+    }
+    async function deleteMessage(m, item) {
+      if (!confirm('Delete this message from ' + m.name + '? This can\'t be undone.')) return;
+      try {
+        await api('/api/messages/' + m.id + '/delete');
+        MESSAGES.splice(MESSAGES.indexOf(m), 1);
+        renderInbox();
+        setMsg(document.getElementById('inboxStatus'), 'Message deleted.', 'ok');
+      } catch (err) {
+        setMsg(document.getElementById('inboxStatus'), err.message, 'err');
+      }
+    }
+    renderInbox();
+
+    // ======================================================================
+    // Site settings: background color
+    // ======================================================================
+    (function () {
+      const picker = document.getElementById('siteBgPicker');
+      const hex = document.getElementById('siteBgHex');
+      const preview = document.getElementById('siteBgPreview');
+      const status = document.getElementById('siteBgStatus');
+      const isHex = (v) => /^#[0-9a-fA-F]{6}$/.test(v);
+      function show(color) {
+        picker.value = color; hex.value = color;
+        const [r, g, b] = [1, 3, 5].map(i => parseInt(color.slice(i, i + 2), 16));
+        const dark = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 < 0.55;
+        preview.style.background = color;
+        preview.style.color = dark ? '#fff' : '#111';
+      }
+      show(CONFIG.siteBg);
+      picker.addEventListener('input', () => { show(picker.value); setMsg(status, 'Not saved yet.'); });
+      hex.addEventListener('input', () => {
+        let v = hex.value.trim();
+        if (v && v[0] !== '#') v = '#' + v;
+        if (isHex(v)) { show(v.toLowerCase()); setMsg(status, 'Not saved yet.'); }
+      });
+      document.getElementById('siteBgReset').addEventListener('click', () => { show(CONFIG.defaultBg); setMsg(status, 'Reset to the default. Click Save Background to apply it.'); });
+      document.getElementById('siteBgSave').addEventListener('click', async () => {
+        const color = picker.value;
+        try {
+          await api('/api/settings', { bg_color: color });
+          CONFIG.siteBg = color;
+          Object.keys(S).forEach(id => { if (!S[id].bg) syncBgControls(id); });
+          setMsg(status, 'Saved. Every page without its own background color now uses this one.', 'ok');
+        } catch (err) {
+          setMsg(status, err.message, 'err');
+        }
+      });
+    })();
   </script>
 </body>
 </html>

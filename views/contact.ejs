@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact | Jon Messier</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/theme.css?bg=<%= encodeURIComponent(bg) %>">
+</head>
+<body id="top">
+  <%- include('partials/header', { logoUrl, active }) %>
+  <main class="contact-page">
+    <div class="project-header">
+      <h1>Contact</h1>
+      <p class="project-description">Have a project in mind or a question? Send a message and I'll get back to you.</p>
+    </div>
+
+    <% if (sent) { %>
+      <div class="contact-sent">
+        <h2>Thanks! Your message was sent.</h2>
+        <p>I'll reply to the email address you provided.</p>
+        <a href="/" class="back-to-top">Back to Portfolio</a>
+      </div>
+    <% } else { %>
+      <form method="POST" action="/contact" class="contact-form" id="contactForm" novalidate>
+        <% if (errors.form) { %><p class="form-error"><%= errors.form %></p><% } %>
+
+        <div class="field <%= errors.name ? 'has-error' : '' %>">
+          <label for="name">Name <span class="req">Required</span></label>
+          <input type="text" id="name" name="name" maxlength="100" autocomplete="name" required value="<%= values.name || '' %>">
+          <% if (errors.name) { %><p class="field-error"><%= errors.name %></p><% } %>
+        </div>
+
+        <div class="field <%= errors.email ? 'has-error' : '' %>">
+          <label for="email">Email Address <span class="req">Required</span></label>
+          <input type="email" id="email" name="email" maxlength="200" autocomplete="email" required value="<%= values.email || '' %>">
+          <% if (errors.email) { %><p class="field-error"><%= errors.email %></p><% } %>
+        </div>
+
+        <div class="field <%= errors.message ? 'has-error' : '' %>">
+          <label for="message">Message <span class="req">Required</span></label>
+          <textarea id="message" name="message" rows="7" maxlength="5000" required><%= values.message || '' %></textarea>
+          <% if (errors.message) { %><p class="field-error"><%= errors.message %></p><% } %>
+        </div>
+
+        <!-- Spam trap: hidden from people, bots tend to fill it in -->
+        <div class="hp" aria-hidden="true"><label for="website">Website</label><input type="text" id="website" name="website" tabindex="-1" autocomplete="off"></div>
+
+        <button type="submit" class="contact-submit" id="sendBtn">Send Message</button>
+        <p class="contact-hint" id="sendHint">Fill in all three fields to send.</p>
+      </form>
+    <% } %>
+  </main>
+
+  <script>
+    // Show "Required" on each field until it's filled in correctly, and only enable Send when all are done
+    (function () {
+      const form = document.getElementById('contactForm');
+      if (!form) return;
+      const fields = Array.from(form.querySelectorAll('input[required], textarea[required]'));
+      const btn = document.getElementById('sendBtn');
+      const hint = document.getElementById('sendHint');
+      function update() {
+        let allGood = true;
+        fields.forEach(f => {
+          const ok = f.value.trim() !== '' && f.checkValidity();
+          f.closest('.field').classList.toggle('done', ok);
+          if (!ok) allGood = false;
+        });
+        btn.disabled = !allGood;
+        hint.style.visibility = allGood ? 'hidden' : 'visible';
+      }
+      fields.forEach(f => f.addEventListener('input', update));
+      form.addEventListener('submit', e => {
+        update();
+        if (btn.disabled) { e.preventDefault(); return; }
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+      });
+      update();
+    })();
+  </script>
+</body>
+</html>
