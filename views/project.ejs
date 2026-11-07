@@ -23,7 +23,6 @@
     </div>
     
     <div class="project-blocks">
-      <!-- Strict Array check to prevent crashes -->
       <% if (Array.isArray(project.blocks) && project.blocks.length > 0) { %>
         <% project.blocks.forEach(function(block) { %>
           <% if (block.type === 'single') { %>
@@ -37,10 +36,17 @@
           <% } %>
         <% }); %>
       <% } else { %>
-        <p style="text-align: center; color: #888; margin-top: 2rem;">No images have been added to this project yet.</p>
+        <div style="text-align: center; color: #888; margin-top: 2rem; padding: 2rem; border: 1px dashed #444;">
+          <p>No images have been added to this project yet.</p>
+        </div>
       <% } %>
     </div>
     
+    <div style="margin-top: 5rem; padding: 1rem; background: #222; border: 1px solid #444; font-family: monospace; font-size: 0.8rem; overflow-x: auto;">
+      <h3 style="color:#4361ee; margin-bottom: 0.5rem;">Database Debug Info:</h3>
+      <pre><%= JSON.stringify(project.blocks, null, 2) %></pre>
+    </div>
+
     <a href="#top" class="back-to-top">↑ Back to Top</a>
     
     <% if (otherProjects && otherProjects.length > 0) { %>

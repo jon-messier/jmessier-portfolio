@@ -1,9 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const { createClient } = require('@tursodatabase/serverless/compat');
-const multer = require('multer');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
-const sharp = require('sharp');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
 const path = require('path');
@@ -42,21 +41,6 @@ const s3 = new S3Client({
   },
 });
 
-const upload = multer({ storage: multer.memoryStorage() });
-
-// Image Processing & Upload (PNG -> WebP -> R2)
-const processAndUpload = async (fileBuffer) => {
-  const webpBuffer = await sharp(fileBuffer).webp({ quality: 80 }).toBuffer();
-  const fileName = `img-${Date.now()}-${Math.round(Math.random() * 1000)}.webp`;
-  await s3.send(new PutObjectCommand({
-    Bucket: process.env.R2_BUCKET_NAME,
-    Key: fileName,
-    Body: webpBuffer,
-    ContentType: 'image/webp',
-  }));
-  return `${process.env.R2_PUBLIC_URL}/${fileName}`;
-};
-
 // 3. Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -75,21 +59,44 @@ const getSettings = async () => {
   return settings;
 };
 
-// Helper: Guarantee an array is returned
 const safeParseBlocks = (blocksData) => {
   if (!blocksData) return [];
   try {
-    // Force to string in case Turso returns a buffer or object
     const str = String(blocksData);
     const parsed = JSON.parse(str);
     return Array.isArray(parsed) ? parsed : [];
   } catch (err) {
-    console.error("Failed to parse blocks:", err);
     return [];
   }
 };
 
-// 4. Public Routes
+// 4. API Route for Direct-to-R2 Upload
+app.post('/api/upload', async (req, res) => {
+  if (!req.session.loggedIn) return res.status(401).json({ error: 'Unauthorized' });
+  
+  const { filename, contentType } = req.body;
+  const uniqueFilename = `img-${Date.now()}-${Math.round(Math.random() * 1000)}-${filename.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+  
+  try {
+    const command = new PutObjectCommand({
+      Bucket: process.env.R2_BUCKET_NAME,
+      Key: uniqueFilename,
+      ContentType: contentType,
+    });
+    
+    const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
+    
+    res.json({ 
+      uploadUrl: signedUrl, 
+      finalUrl: `${process.env.R2_PUBLIC_URL}/${uniqueFilename}` 
+    });
+  } catch (err) {
+    console.error("Failed to generate signed URL:", err);
+    res.status(500).json({ error: 'Failed to generate upload URL' });
+  }
+});
+
+// 5. Public Routes
 app.get('/', async (req, res) => {
   try {
     const result = await db.execute("SELECT * FROM projects ORDER BY id DESC");
@@ -107,8 +114,6 @@ app.get('/project/:id', async (req, res) => {
     if (result.rows.length === 0) return res.status(404).send('Project not found');
     
     const project = result.rows[0];
-    
-    // Force it to be an array here
     project.blocks = safeParseBlocks(project.blocks);
     
     const allProjectsResult = await db.execute("SELECT id, title, cover_image FROM projects WHERE id != ? ORDER BY id ASC", [req.params.id]);
@@ -122,7 +127,7 @@ app.get('/project/:id', async (req, res) => {
   }
 });
 
-// 5. Admin Routes
+// 6. Admin Routes
 app.get('/login', (req, res) => res.render('login'));
 
 app.post('/login', async (req, res) => {
@@ -146,32 +151,24 @@ app.get('/admin', async (req, res) => {
   try {
     const result = await db.execute("SELECT * FROM projects ORDER BY id DESC");
     const settings = await getSettings();
-    
-    // Clean up the blocks before sending to admin view
     const cleanProjects = result.rows.map(p => {
       p.blocks = safeParseBlocks(p.blocks);
       return p;
     });
-
     res.render('admin', { projects: cleanProjects, logoUrl: settings.logo_url });
   } catch (err) {
     res.status(500).send("Error loading admin dashboard.");
   }
 });
 
-app.post('/admin/add', upload.array('images', 20), async (req, res) => {
+app.post('/admin/add', async (req, res) => {
   if (!req.session.loggedIn) return res.redirect('/login');
-  const { title } = req.body;
+  const { title, blocks } = req.body;
   try {
-    const blocks = [];
-    if (req.files && req.files.length > 0) {
-      const uploadPromises = req.files.map(file => processAndUpload(file.buffer));
-      const urls = await Promise.all(uploadPromises);
-      urls.forEach(url => blocks.push({ type: 'single', url: url }));
-    }
+    const parsedBlocks = typeof blocks === 'string' ? JSON.parse(blocks) : blocks;
     await db.execute({
       sql: "INSERT INTO projects (title, cover_image, blocks) VALUES (?, ?, ?)",
-      args: [title, blocks.length > 0 ? blocks[0].url : '', JSON.stringify(blocks)]
+      args: [title, parsedBlocks.length > 0 ? parsedBlocks[0].url : '', JSON.stringify(parsedBlocks)]
     });
     res.redirect('/admin');
   } catch (err) { 
@@ -180,51 +177,22 @@ app.post('/admin/add', upload.array('images', 20), async (req, res) => {
   }
 });
 
-app.post('/admin/edit/:id', upload.fields([{ name: 'cover_image', maxCount: 1 }, { name: 'new_images', maxCount: 20 }]), async (req, res) => {
+app.post('/admin/edit/:id', async (req, res) => {
   if (!req.session.loggedIn) return res.redirect('/login');
   const { id } = req.params;
-  const { title, description, blocks_json_base64 } = req.body;
+  const { title, description, blocks, cover_image } = req.body;
   
   try {
-    let blocks = [];
+    const parsedBlocks = typeof blocks === 'string' ? JSON.parse(blocks) : blocks;
+    let coverImageUrl = cover_image;
     
-    if (blocks_json_base64) {
-      try {
-        const decodedString = Buffer.from(blocks_json_base64, 'base64').toString('utf8');
-        blocks = safeParseBlocks(decodedString);
-      } catch (e) {
-        console.error("Failed to decode blocks base64:", e);
-      }
-    }
-
-    let coverImageUrl = '';
-
-    if (req.files['cover_image'] && req.files['cover_image'][0]) {
-      coverImageUrl = await processAndUpload(req.files['cover_image'][0].buffer);
-    } else {
-      const existing = await db.execute({ sql: "SELECT cover_image FROM projects WHERE id = ?", args: [id] });
-      coverImageUrl = existing.rows[0].cover_image;
-    }
-
-    if (req.files['new_images'] && req.files['new_images'].length > 0) {
-      for (const file of req.files['new_images']) {
-        try {
-          const url = await processAndUpload(file.buffer);
-          blocks.push({ type: 'single', url: url });
-        } catch (uploadError) {
-          console.error("Failed to upload image:", uploadError);
-        }
-      }
-    }
-
-    const newEmbedCode = req.body.new_embed_code;
-    if (newEmbedCode && newEmbedCode.trim() !== '') {
-      blocks.push({ type: 'embed', code: newEmbedCode.trim() });
+    if (!coverImageUrl && parsedBlocks.length > 0) {
+      coverImageUrl = parsedBlocks[0].url;
     }
 
     await db.execute({
       sql: `UPDATE projects SET title = ?, description = ?, blocks = ?, cover_image = ? WHERE id = ?`,
-      args: [title, description, JSON.stringify(blocks), coverImageUrl, id]
+      args: [title, description, JSON.stringify(parsedBlocks), coverImageUrl, id]
     });
     res.redirect('/admin');
   } catch (err) { 
@@ -243,20 +211,20 @@ app.post('/admin/delete/:id', async (req, res) => {
   }
 });
 
-app.post('/admin/settings/logo', upload.single('logo'), async (req, res) => {
+app.post('/admin/settings/logo', async (req, res) => {
   if (!req.session.loggedIn) return res.redirect('/login');
-  if (req.file) {
+  const { logo_url } = req.body;
+  if (logo_url) {
     try {
-      const logoUrl = await processAndUpload(req.file.buffer);
-      await db.execute({ sql: "UPDATE settings SET value = ? WHERE key = 'logo_url'", args: [logoUrl] });
+      await db.execute({ sql: "UPDATE settings SET value = ? WHERE key = 'logo_url'", args: [logo_url] });
     } catch (err) {
-      console.error("Logo upload error:", err);
+      console.error("Logo update error:", err);
     }
   }
   res.redirect('/admin');
 });
 
-// 6. Vercel Export
+// 7. Vercel Export
 if (process.env.NODE_ENV !== 'production') {
   app.listen(3000, () => console.log('Server running at http://localhost:3000'));
 }

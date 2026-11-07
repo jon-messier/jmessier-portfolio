@@ -16,6 +16,7 @@
     input[type="text"], textarea, input[type="file"] { width: 100%; padding: 10px; background: #111; border: 1px solid #444; color: #fff; border-radius: 4px; font-family: 'Open Sans'; }
     .btn { background: #4361ee; color: #fff; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem; text-decoration: none; display: inline-block; }
     .btn:hover { background: #3049c4; }
+    .btn:disabled { background: #555; cursor: not-allowed; }
     .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
     .btn-danger { background: #e63946; }
     .btn-danger:hover { background: #ba2d39; }
@@ -26,6 +27,7 @@
     .project-info img { width: 80px; height: 60px; object-fit: cover; border-radius: 4px; }
     .edit-panel { display: none; background: #1a1a1a; padding: 1.5rem; border-radius: 6px; border: 1px solid #4361ee; margin-bottom: 2rem; }
     .edit-panel.active { display: block; }
+    .status-msg { font-size: 0.9rem; margin-top: 1rem; color: #4361ee; }
   </style>
 </head>
 <body>
@@ -34,27 +36,34 @@
       <h1>Admin Dashboard</h1>
       <a href="/" class="btn btn-outline" target="_blank">View Site &rarr;</a>
     </div>
+    
+    <!-- Logo Upload -->
     <div class="card">
       <h2>Global Settings</h2>
-      <form action="/admin/settings/logo" method="POST" enctype="multipart/form-data">
-        <div class="form-group" style="display:flex; align-items:center; gap:2rem;">
-          <div style="flex:1;"><label>Site Logo (SVG/PNG)</label><input type="file" name="logo" accept="image/*" required></div>
-          <div style="background:#111; padding:1rem; border-radius:8px; min-width:150px; text-align:center;">
-            <span style="font-size:0.8rem; color:#aaa; display:block; margin-bottom:0.5rem;">Current:</span>
-            <% if (logoUrl) { %><img src="<%= logoUrl %>" style="max-height: 40px; max-width: 100px; filter: brightness(0) invert(1);"><% } else { %><span style="font-size:1.5rem; font-weight:700;">JM</span><% } %>
-          </div>
+      <div class="form-group" style="display:flex; align-items:center; gap:2rem;">
+        <div style="flex:1;">
+          <label>Site Logo (SVG/PNG)</label>
+          <input type="file" id="logoInput" accept="image/*">
+          <p id="logoStatus" class="status-msg"></p>
         </div>
-        <button type="submit" class="btn">Update Logo</button>
-      </form>
+        <div style="background:#111; padding:1rem; border-radius:8px; min-width:150px; text-align:center;">
+          <span style="font-size:0.8rem; color:#aaa; display:block; margin-bottom:0.5rem;">Current:</span>
+          <% if (logoUrl) { %><img src="<%= logoUrl %>" style="max-height: 40px; max-width: 100px; filter: brightness(0) invert(1);"><% } else { %><span style="font-size:1.5rem; font-weight:700;">JM</span><% } %>
+        </div>
+      </div>
     </div>
+
+    <!-- Add Project -->
     <div class="card">
       <h2>Add New Project</h2>
-      <form action="/admin/add" method="POST" enctype="multipart/form-data">
-        <div class="form-group"><label>Project Title</label><input type="text" name="title" required></div>
-        <div class="form-group"><label>Initial Images (First is Cover)</label><input type="file" name="images" multiple accept="image/*" required></div>
-        <button type="submit" class="btn">Create Project</button>
+      <form id="addForm">
+        <div class="form-group"><label>Project Title</label><input type="text" id="addTitle" required></div>
+        <div class="form-group"><label>Initial Images (First is Cover)</label><input type="file" id="addImages" multiple accept="image/*" required></div>
+        <button type="submit" class="btn" id="addBtn">Create Project</button>
+        <p id="addStatus" class="status-msg"></p>
       </form>
     </div>
+
     <h2>Existing Projects</h2>
     <% projects.forEach(function(project) { %>
       <div class="project-row">
@@ -64,23 +73,182 @@
           <form action="/admin/delete/<%= project.id %>" method="POST"><button type="submit" class="btn btn-danger btn-sm">Delete</button></form>
         </div>
       </div>
+      
+      <!-- Edit Panel -->
       <div id="edit-<%= project.id %>" class="edit-panel">
-        <form action="/admin/edit/<%= project.id %>" method="POST" enctype="multipart/form-data">
+        <form class="edit-form" data-id="<%= project.id %>">
           <div class="form-group"><label>Title</label><input type="text" name="title" value="<%= project.title %>" required></div>
           <div class="form-group"><label>Description</label><textarea name="description" rows="3"><%= project.description || '' %></textarea></div>
           <div class="form-group"><label>Change Cover</label><input type="file" name="cover_image" accept="image/*"></div>
           <div class="form-group"><label>Add New Images</label><input type="file" name="new_images" multiple accept="image/*"></div>
           <div class="form-group" style="border-top: 1px solid #444; padding-top: 1rem;"><label>Add Embed (FlipSnack/YouTube)</label><textarea name="new_embed_code" rows="2" placeholder="Paste iframe code..."></textarea></div>
           
-          <!-- Convert the actual array to a Base64 string safely -->
-          <input type="hidden" name="blocks_json_base64" value="<%= Buffer.from(JSON.stringify(project.blocks)).toString('base64') %>">
+          <input type="hidden" name="blocks_json" value='<%= JSON.stringify(project.blocks) %>'>
+          <input type="hidden" name="current_cover" value="<%= project.cover_image %>">
           
           <button type="submit" class="btn">Save Changes</button>
           <button type="button" class="btn btn-outline" onclick="toggleEdit('<%= project.id %>')">Cancel</button>
+          <p class="status-msg" id="status-<%= project.id %>"></p>
         </form>
       </div>
     <% }); %>
   </div>
-  <script>function toggleEdit(id) { document.getElementById('edit-' + id).classList.toggle('active'); }</script>
+
+  <script>
+    // Helper to upload a single file directly to R2
+    async function uploadFileToR2(file) {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: file.name, contentType: file.type })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      // Upload the actual file to the signed URL
+      await fetch(data.uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file
+      });
+      
+      return data.finalUrl;
+    }
+
+    // 1. Handle Logo Upload
+    document.getElementById('logoInput').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const status = document.getElementById('logoStatus');
+      status.textContent = 'Uploading...';
+      
+      try {
+        const finalUrl = await uploadFileToR2(file);
+        
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/admin/settings/logo';
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'logo_url';
+        input.value = finalUrl;
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+      } catch (err) {
+        status.textContent = 'Error: ' + err.message;
+        status.style.color = '#e63946';
+      }
+    });
+
+    // 2. Handle New Project Creation
+    document.getElementById('addForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('addTitle').value;
+      const files = document.getElementById('addImages').files;
+      const btn = document.getElementById('addBtn');
+      const status = document.getElementById('addStatus');
+      
+      if (!files.length) return alert('Please select images.');
+      
+      btn.disabled = true;
+      status.textContent = 'Uploading images...';
+      
+      try {
+        const blocks = [];
+        for (const file of files) {
+          const url = await uploadFileToR2(file);
+          blocks.push({ type: 'single', url: url });
+        }
+        
+        status.textContent = 'Saving to database...';
+        
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/admin/add';
+        
+        const titleInput = document.createElement('input');
+        titleInput.type = 'hidden'; titleInput.name = 'title'; titleInput.value = title;
+        form.appendChild(titleInput);
+        
+        const blocksInput = document.createElement('input');
+        blocksInput.type = 'hidden'; blocksInput.name = 'blocks'; blocksInput.value = JSON.stringify(blocks);
+        form.appendChild(blocksInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+      } catch (err) {
+        status.textContent = 'Error: ' + err.message;
+        status.style.color = '#e63946';
+        btn.disabled = false;
+      }
+    });
+
+    // 3. Handle Project Editing
+    document.querySelectorAll('.edit-form').forEach(form => {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = form.getAttribute('data-id');
+        const btn = form.querySelector('button[type="submit"]');
+        const status = document.getElementById('status-' + id);
+        
+        btn.disabled = true;
+        status.textContent = 'Uploading...';
+        
+        try {
+          const title = form.querySelector('input[name="title"]').value;
+          const description = form.querySelector('textarea[name="description"]').value;
+          const newEmbedCode = form.querySelector('textarea[name="new_embed_code"]').value;
+          let coverImageUrl = form.querySelector('input[name="current_cover"]').value;
+          
+          let blocks = JSON.parse(form.querySelector('input[name="blocks_json"]').value || '[]');
+          
+          const coverInput = form.querySelector('input[name="cover_image"]');
+          if (coverInput.files.length > 0) {
+            coverImageUrl = await uploadFileToR2(coverInput.files[0]);
+          }
+          
+          const newImagesInput = form.querySelector('input[name="new_images"]');
+          if (newImagesInput.files.length > 0) {
+            for (const file of newImagesInput.files) {
+              const url = await uploadFileToR2(file);
+              blocks.push({ type: 'single', url: url });
+            }
+          }
+          
+          if (newEmbedCode.trim() !== '') {
+            blocks.push({ type: 'embed', code: newEmbedCode.trim() });
+          }
+          
+          status.textContent = 'Saving changes...';
+          
+          const finalForm = document.createElement('form');
+          finalForm.method = 'POST';
+          finalForm.action = '/admin/edit/' + id;
+          
+          const addHidden = (name, value) => {
+            const input = document.createElement('input');
+            input.type = 'hidden'; input.name = name; input.value = value;
+            finalForm.appendChild(input);
+          };
+          
+          addHidden('title', title);
+          addHidden('description', description);
+          addHidden('blocks', JSON.stringify(blocks));
+          addHidden('cover_image', coverImageUrl);
+          
+          document.body.appendChild(finalForm);
+          finalForm.submit();
+          
+        } catch (err) {
+          status.textContent = 'Error: ' + err.message;
+          status.style.color = '#e63946';
+          btn.disabled = false;
+        }
+      });
+    });
+
+    function toggleEdit(id) { document.getElementById('edit-' + id).classList.toggle('active'); }
+  </script>
 </body>
 </html>
