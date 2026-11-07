@@ -3,7 +3,7 @@ const express = require('express');
 const { createClient } = require('@tursodatabase/serverless/compat');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
-const session = require('express-session');
+const session = require('cookie-session');
 const bcrypt = require('bcrypt');
 const path = require('path');
 
@@ -27,7 +27,7 @@ db.batch([
   }
   const logoSetting = await db.execute("SELECT * FROM settings WHERE key = 'logo_url'");
   if (logoSetting.rows.length === 0) {
-    await db.execute("INSERT INTO settings (key, value) VALUES ('logo_url', '')");
+    await db.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('logo_url', '')");
   }
 }).catch(err => console.error("Database init error:", err));
 
@@ -46,16 +46,27 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.set('view engine', 'ejs');
 app.use(express.static(path.join(__dirname, 'public')));
+// Keep the login in a signed cookie, not server memory. On Vercel each request can hit a
+// different server instance, so in-memory sessions get "forgotten" (→ "Unauthorized").
+app.set('trust proxy', 1);
 app.use(session({
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false
+  name: 'session',
+  keys: [process.env.SESSION_SECRET],
+  maxAge: 7 * 24 * 60 * 60 * 1000, // stay logged in for 7 days
+  sameSite: 'lax',
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production'
 }));
+
+// Helper: Turso's rows are read-only, so assigning row.blocks = [...] silently does nothing.
+// Copy each row into a plain object we're allowed to modify.
+const toObjects = (result) =>
+  result.rows.map(row => Object.fromEntries(result.columns.map((col, i) => [col, row[i]])));
 
 const getSettings = async () => {
   const result = await db.execute("SELECT * FROM settings");
   const settings = {};
-  result.rows.forEach(row => { settings[row.key] = row.value; });
+  toObjects(result).forEach(row => { settings[row.key] = row.value; });
   return settings;
 };
 
@@ -112,7 +123,7 @@ app.get('/', async (req, res) => {
   try {
     const result = await db.execute("SELECT * FROM projects ORDER BY id DESC");
     const settings = await getSettings();
-    res.render('index', { projects: result.rows, logoUrl: settings.logo_url });
+    res.render('index', { projects: toObjects(result), logoUrl: settings.logo_url });
   } catch (err) {
     console.error(err);
     res.status(500).send("Error loading homepage.");
@@ -124,11 +135,11 @@ app.get('/project/:id', async (req, res) => {
     const result = await db.execute({ sql: "SELECT * FROM projects WHERE id = ?", args: [req.params.id] });
     if (result.rows.length === 0) return res.status(404).send('Project not found');
     
-    const project = result.rows[0];
+    const project = toObjects(result)[0];
     project.blocks = safeParseBlocks(project.blocks);
-    
-    const allProjectsResult = await db.execute("SELECT id, title, cover_image FROM projects WHERE id != ? ORDER BY id ASC", [req.params.id]);
-    const otherProjects = allProjectsResult.rows;
+
+    const allProjectsResult = await db.execute({ sql: "SELECT id, title, cover_image FROM projects WHERE id != ? ORDER BY id ASC", args: [req.params.id] });
+    const otherProjects = toObjects(allProjectsResult);
     const settings = await getSettings();
     
     res.render('project', { project, logoUrl: settings.logo_url, otherProjects });
@@ -145,7 +156,7 @@ app.post('/login', async (req, res) => {
   const { username, password } = req.body;
   try {
     const result = await db.execute({ sql: "SELECT * FROM users WHERE username = ?", args: [username] });
-    const user = result.rows[0];
+    const user = toObjects(result)[0];
     if (user && bcrypt.compareSync(password, user.password)) {
       req.session.loggedIn = true;
       res.redirect('/admin');
@@ -162,7 +173,7 @@ app.get('/admin', async (req, res) => {
   try {
     const result = await db.execute("SELECT * FROM projects ORDER BY id DESC");
     const settings = await getSettings();
-    const cleanProjects = result.rows.map(p => {
+    const cleanProjects = toObjects(result).map(p => {
       p.blocks = safeParseBlocks(p.blocks);
       return p;
     });
@@ -237,7 +248,8 @@ app.post('/admin/settings/logo', async (req, res) => {
   const { logo_url } = req.body;
   if (logo_url) {
     try {
-      await db.execute({ sql: "UPDATE settings SET value = ? WHERE key = 'logo_url'", args: [logo_url] });
+      // Insert the row if it's missing, otherwise update it
+      await db.execute({ sql: "INSERT INTO settings (key, value) VALUES ('logo_url', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", args: [logo_url] });
     } catch (err) {
       console.error("Logo update error:", err);
     }
