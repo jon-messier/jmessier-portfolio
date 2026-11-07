@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin | Manage Projects</title>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Open Sans', sans-serif; background: #111; color: #fff; margin: 0; padding: 2rem; }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1, h2, h3 { font-weight: 600; margin-top: 0; }
+    .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid #333; padding-bottom: 1rem; }
+    .card { background: #222; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid #333; }
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px; }
+    input[type="text"], textarea, input[type="file"] { width: 100%; padding: 10px; background: #111; border: 1px solid #444; color: #fff; border-radius: 4px; font-family: 'Open Sans'; }
+    .btn { background: #4361ee; color: #fff; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem; text-decoration: none; display: inline-block; }
+    .btn:hover { background: #3049c4; }
+    .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+    .btn-danger { background: #e63946; }
+    .btn-danger:hover { background: #ba2d39; }
+    .btn-outline { background: transparent; border: 1px solid #555; color: #aaa; }
+    .btn-outline:hover { background: #333; color: #fff; }
+    .project-row { display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: #1a1a1a; border: 1px solid #333; border-radius: 6px; margin-bottom: 1rem; }
+    .project-info { display: flex; align-items: center; gap: 1rem; }
+    .project-info img { width: 80px; height: 60px; object-fit: cover; border-radius: 4px; }
+    .edit-panel { display: none; background: #1a1a1a; padding: 1.5rem; border-radius: 6px; border: 1px solid #4361ee; margin-bottom: 2rem; }
+    .edit-panel.active { display: block; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-nav">
+      <h1>Admin Dashboard</h1>
+      <a href="/" class="btn btn-outline" target="_blank">View Site &rarr;</a>
+    </div>
+    <div class="card">
+      <h2>Global Settings</h2>
+      <form action="/admin/settings/logo" method="POST" enctype="multipart/form-data">
+        <div class="form-group" style="display:flex; align-items:center; gap:2rem;">
+          <div style="flex:1;"><label>Site Logo (SVG/PNG)</label><input type="file" name="logo" accept="image/*" required></div>
+          <div style="background:#111; padding:1rem; border-radius:8px; min-width:150px; text-align:center;">
+            <span style="font-size:0.8rem; color:#aaa; display:block; margin-bottom:0.5rem;">Current:</span>
+            <% if (logoUrl) { %><img src="<%= logoUrl %>" style="max-height: 40px; max-width: 100px; filter: brightness(0) invert(1);"><% } else { %><span style="font-size:1.5rem; font-weight:700;">JM</span><% } %>
+          </div>
+        </div>
+        <button type="submit" class="btn">Update Logo</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Add New Project</h2>
+      <form action="/admin/add" method="POST" enctype="multipart/form-data">
+        <div class="form-group"><label>Project Title</label><input type="text" name="title" required></div>
+        <div class="form-group"><label>Initial Images (First is Cover)</label><input type="file" name="images" multiple accept="image/*" required></div>
+        <button type="submit" class="btn">Create Project</button>
+      </form>
+    </div>
+    <h2>Existing Projects</h2>
+    <% projects.forEach(function(project) { %>
+      <div class="project-row">
+        <div class="project-info"><img src="<%= project.cover_image %>"><div><h3 style="margin:0;"><%= project.title %></h3></div></div>
+        <div style="display:flex; gap:0.5rem;">
+          <button class="btn btn-sm" onclick="toggleEdit('<%= project.id %>')">Edit</button>
+          <form action="/admin/delete/<%= project.id %>" method="POST"><button type="submit" class="btn btn-danger btn-sm">Delete</button></form>
+        </div>
+      </div>
+      <div id="edit-<%= project.id %>" class="edit-panel">
+        <form action="/admin/edit/<%= project.id %>" method="POST" enctype="multipart/form-data">
+          <div class="form-group"><label>Title</label><input type="text" name="title" value="<%= project.title %>" required></div>
+          <div class="form-group"><label>Description</label><textarea name="description" rows="3"><%= project.description || '' %></textarea></div>
+          <div class="form-group"><label>Change Cover</label><input type="file" name="cover_image" accept="image/*"></div>
+          <div class="form-group"><label>Add New Images</label><input type="file" name="new_images" multiple accept="image/*"></div>
+          <div class="form-group" style="border-top: 1px solid #444; padding-top: 1rem;"><label>Add Embed (FlipSnack/YouTube)</label><textarea name="new_embed_code" rows="2" placeholder="Paste iframe code..."></textarea></div>
+          <input type="hidden" name="blocks_json" value="<%= project.blocks %>">
+          <button type="submit" class="btn">Save Changes</button>
+          <button type="button" class="btn btn-outline" onclick="toggleEdit('<%= project.id %>')">Cancel</button>
+        </form>
+      </div>
+    <% }); %>
+  </div>
+  <script>function toggleEdit(id) { document.getElementById('edit-' + id).classList.toggle('active'); }</script>
+</body>
+</html>
