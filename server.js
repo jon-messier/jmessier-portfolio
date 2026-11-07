@@ -59,20 +59,31 @@ const getSettings = async () => {
   return settings;
 };
 
+// Helper: Guarantee an array is returned, even if the database double-stringified it
 const safeParseBlocks = (blocksData) => {
   if (!blocksData) return [];
   try {
     const str = String(blocksData);
-    const parsed = JSON.parse(str);
+    let parsed = JSON.parse(str);
+    
+    // If the database returned a stringified string (e.g. '"[...]"'), parse it again
+    if (typeof parsed === 'string') {
+      parsed = JSON.parse(parsed);
+    }
+    
     return Array.isArray(parsed) ? parsed : [];
   } catch (err) {
+    console.error("Failed to parse blocks:", err);
     return [];
   }
 };
 
 // 4. API Route for Direct-to-R2 Upload
 app.post('/api/upload', async (req, res) => {
-  if (!req.session.loggedIn) return res.status(401).json({ error: 'Unauthorized' });
+  if (!req.session.loggedIn) {
+    console.log("Upload rejected: Not logged in");
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
   
   const { filename, contentType } = req.body;
   const uniqueFilename = `img-${Date.now()}-${Math.round(Math.random() * 1000)}-${filename.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
@@ -165,7 +176,13 @@ app.post('/admin/add', async (req, res) => {
   if (!req.session.loggedIn) return res.redirect('/login');
   const { title, blocks } = req.body;
   try {
-    const parsedBlocks = typeof blocks === 'string' ? JSON.parse(blocks) : blocks;
+    // Safely parse the string sent from the browser into a real array
+    let parsedBlocks = [];
+    if (blocks) {
+      const temp = JSON.parse(blocks);
+      if (Array.isArray(temp)) parsedBlocks = temp;
+    }
+
     await db.execute({
       sql: "INSERT INTO projects (title, cover_image, blocks) VALUES (?, ?, ?)",
       args: [title, parsedBlocks.length > 0 ? parsedBlocks[0].url : '', JSON.stringify(parsedBlocks)]
@@ -183,9 +200,13 @@ app.post('/admin/edit/:id', async (req, res) => {
   const { title, description, blocks, cover_image } = req.body;
   
   try {
-    const parsedBlocks = typeof blocks === 'string' ? JSON.parse(blocks) : blocks;
+    let parsedBlocks = [];
+    if (blocks) {
+      const temp = JSON.parse(blocks);
+      if (Array.isArray(temp)) parsedBlocks = temp;
+    }
+
     let coverImageUrl = cover_image;
-    
     if (!coverImageUrl && parsedBlocks.length > 0) {
       coverImageUrl = parsedBlocks[0].url;
     }

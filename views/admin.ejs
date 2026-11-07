@@ -100,6 +100,7 @@
       const res = await fetch('/api/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin', // <--- CRITICAL FIX: Sends session cookie
         body: JSON.stringify({ filename: file.name, contentType: file.type })
       });
       const data = await res.json();
@@ -184,7 +185,7 @@
       }
     });
 
-    // 3. Handle Project Editing (WITH CRITICAL SAFETY CHECK)
+    // 3. Handle Project Editing
     document.querySelectorAll('.edit-form').forEach(form => {
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -201,7 +202,6 @@
           const newEmbedCode = form.querySelector('textarea[name="new_embed_code"]').value;
           let coverImageUrl = form.querySelector('input[name="current_cover"]').value;
           
-          // Safety check: Ensure blocks is ALWAYS an array
           let blocks = [];
           try {
             const parsedData = JSON.parse(form.querySelector('input[name="blocks_json"]').value || '[]');
