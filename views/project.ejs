@@ -1,31 +1,84 @@
+<%
+  // Locals arrive from server.js (see APPEARANCE-CONTRACT.md §3). Normalise them here so a
+  // missing setting falls back to the site's previous behaviour instead of breaking the page.
+  var appearanceData = (typeof appearance === 'object' && appearance) ? appearance : {};
+  var contentData = (typeof content === 'object' && content) ? content : {};
+  var seoData = (contentData.seo && typeof contentData.seo === 'object') ? contentData.seo : {};
+  var siteName = (seoData.siteName && String(seoData.siteName).trim()) ? String(seoData.siteName).trim() : 'Jon Messier';
+  var siteCss = (typeof siteCssVersion !== 'undefined' && siteCssVersion != null) ? String(siteCssVersion) : '';
+  var pageYear = (typeof currentYear !== 'undefined' && currentYear != null) ? currentYear : new Date().getFullYear();
+  var logoSrc = (typeof logoUrl !== 'undefined' && logoUrl) ? String(logoUrl) : '';
+  var activePage = (typeof active !== 'undefined' && active) ? String(active) : 'portfolio';
+  var bgColor = (typeof bg !== 'undefined' && bg) ? String(bg) : '#181818';
+
+  var projectData = (typeof project === 'object' && project) ? project : {};
+  var projectTitle = (projectData.title && String(projectData.title).trim()) ? String(projectData.title).trim() : 'Project';
+  var projectBlocks = Array.isArray(projectData.blocks) ? projectData.blocks : [];
+  var otherList = (typeof otherProjects !== 'undefined' && Array.isArray(otherProjects)) ? otherProjects : [];
+  var previewMode = (typeof isPreview !== 'undefined') ? !!isPreview : false;
+
+  // Page-specific sharing data: a project page uses the project's own description/cover.
+  var projectDescription = (projectData.description && String(projectData.description).trim()) ? String(projectData.description).trim().replace(/\s+/g, ' ') : '';
+  var seoDescription = (seoData.description && String(seoData.description).trim()) ? String(seoData.description).trim().replace(/\s+/g, ' ') : '';
+  var pageDescription = projectDescription || seoDescription;
+  var coverImage = (projectData.cover_image && /^https?:\/\//i.test(String(projectData.cover_image))) ? String(projectData.cover_image) : '';
+  var seoOgImage = (seoData.ogImage && /^https?:\/\//i.test(String(seoData.ogImage))) ? String(seoData.ogImage) : '';
+  var ogImage = coverImage || seoOgImage;
+  var faviconUrl = (seoData.favicon && /^https?:\/\//i.test(String(seoData.favicon))) ? String(seoData.favicon) : '';
+  var pageTitle = projectTitle + ' | ' + siteName;
+
+  // "More Projects" carousel: hidden entirely when switched off in Site Settings.
+  var projectConfig = (appearanceData.project && typeof appearanceData.project === 'object') ? appearanceData.project : {};
+  var showCarousel = projectConfig.carouselShow !== false;
+
+  // Project layout values come from the project row (server validates them); keep CSS-safe fallbacks.
+  var projectWidth = Number(projectData.content_width) || 1100;
+  var projectGap = (typeof projectData.block_gap !== 'undefined' && projectData.block_gap !== null && projectData.block_gap !== '') ? projectData.block_gap : 2;
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= project.title %> | Jon Messier</title>
+  <title><%= pageTitle %></title>
+  <% if (pageDescription) { %>
+  <meta name="description" content="<%= pageDescription %>">
+  <% } %>
+  <meta property="og:title" content="<%= pageTitle %>">
+  <% if (pageDescription) { %>
+  <meta property="og:description" content="<%= pageDescription %>">
+  <% } %>
+  <% if (ogImage) { %>
+  <meta property="og:image" content="<%= ogImage %>">
+  <% } %>
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="<%= siteName %>">
+  <% if (faviconUrl) { %>
+  <link rel="icon" href="<%= faviconUrl %>">
+  <% } %>
+  <link rel="stylesheet" href="/site.css?v=<%= siteCss %>">
   <link rel="stylesheet" href="/style.css">
-  <link rel="stylesheet" href="/theme.css?bg=<%= encodeURIComponent(bg) %>">
+  <link rel="stylesheet" href="/theme.css?bg=<%= encodeURIComponent(bgColor) %>">
 </head>
 <body id="top">
-  <%- include('partials/header', { logoUrl, active }) %>
+  <%- include('partials/header', { logoUrl: logoSrc, active: activePage, appearance: appearanceData }) %>
   <main class="project-page">
-    <% if (isPreview) { %>
+    <% if (previewMode) { %>
       <div class="preview-banner">This project is hidden. Only you can see it because you're logged in.</div>
     <% } %>
     <div class="project-header">
-      <h1><%= project.title %></h1>
-      <% if (project.description) { %><p class="project-description"><%= project.description %></p><% } %>
+      <h1><%= projectTitle %></h1>
+      <% if (projectData.description) { %><p class="project-description"><%= projectData.description %></p><% } %>
     </div>
 
-    <div class="project-blocks" data-width="<%= project.content_width %>" data-gap="<%= project.block_gap %>">
-      <% if (project.blocks.length > 0) { %>
-        <% project.blocks.forEach(function(block) { %>
+    <div class="project-blocks" data-width="<%= projectWidth %>" data-gap="<%= projectGap %>">
+      <% if (projectBlocks.length > 0) { %>
+        <% projectBlocks.forEach(function(block) { %>
           <% if (block.type === 'single') { %>
             <div class="block-single"><img src="<%= block.url %>" onclick="openLightbox(this.src)" oncontextmenu="return false;"></div>
           <% } else if (block.type === 'grid') { %>
             <div class="block-grid" data-cols="<%= block.cols %>" data-gap="<%= block.gap %>">
-              <% block.images.forEach(function(img) { if (img) { %><img src="<%= img %>" onclick="openLightbox(this.src)" oncontextmenu="return false;"><% } }); %>
+              <% (Array.isArray(block.images) ? block.images : []).forEach(function(img) { if (img) { %><img src="<%= img %>" onclick="openLightbox(this.src)" oncontextmenu="return false;"><% } }); %>
             </div>
           <% } else if (block.type === 'embed') { %>
             <div class="block-embed"><%- block.code %></div>
@@ -38,11 +91,11 @@
 
     <a href="#top" class="back-to-top">↑ Back to Top</a>
 
-    <% if (otherProjects && otherProjects.length > 0) { %>
+    <% if (showCarousel && otherList.length > 0) { %>
       <div class="carousel-section">
         <h2 class="carousel-title">More Projects</h2>
         <div class="carousel">
-          <% otherProjects.forEach(function(op) { %>
+          <% otherList.forEach(function(op) { %>
             <a href="/project/<%= op.slug %>" class="carousel-item">
               <img src="<%= op.cover_image %>" alt="<%= op.title %>" oncontextmenu="return false;">
               <h3><%= op.title %></h3>
@@ -56,6 +109,7 @@
     <span class="lightbox-close">&times;</span>
     <img id="lightbox-img" src="" oncontextmenu="return false;">
   </div>
+  <%- include('partials/footer', { content: contentData, currentYear: pageYear, logoUrl: logoSrc }) %>
   <script src="/script.js"></script>
 </body>
 </html>

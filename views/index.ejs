@@ -1,17 +1,51 @@
+<%
+  // Locals arrive from server.js (see APPEARANCE-CONTRACT.md §3). Normalise them here so a
+  // missing setting falls back to the site's previous behaviour instead of breaking the page.
+  var appearanceData = (typeof appearance === 'object' && appearance) ? appearance : {};
+  var contentData = (typeof content === 'object' && content) ? content : {};
+  var seoData = (contentData.seo && typeof contentData.seo === 'object') ? contentData.seo : {};
+  var siteName = (seoData.siteName && String(seoData.siteName).trim()) ? String(seoData.siteName).trim() : 'Jon Messier';
+  var homeTitle = (seoData.homeTitle && String(seoData.homeTitle).trim()) ? String(seoData.homeTitle).trim() : siteName;
+  var pageDescription = (seoData.description && String(seoData.description).trim()) ? String(seoData.description).trim().replace(/\s+/g, ' ') : '';
+  var ogImage = (seoData.ogImage && /^https?:\/\//i.test(String(seoData.ogImage))) ? String(seoData.ogImage) : '';
+  var faviconUrl = (seoData.favicon && /^https?:\/\//i.test(String(seoData.favicon))) ? String(seoData.favicon) : '';
+  var siteCss = (typeof siteCssVersion !== 'undefined' && siteCssVersion != null) ? String(siteCssVersion) : '';
+  var pageYear = (typeof currentYear !== 'undefined' && currentYear != null) ? currentYear : new Date().getFullYear();
+  var logoSrc = (typeof logoUrl !== 'undefined' && logoUrl) ? String(logoUrl) : '';
+  var activePage = (typeof active !== 'undefined' && active) ? String(active) : 'portfolio';
+  var bgColor = (typeof bg !== 'undefined' && bg) ? String(bg) : '#181818';
+  var projectList = (typeof projects !== 'undefined' && Array.isArray(projects)) ? projects : [];
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jon Messier | Portfolio</title>
+  <title><%= homeTitle %></title>
+  <% if (pageDescription) { %>
+  <meta name="description" content="<%= pageDescription %>">
+  <% } %>
+  <meta property="og:title" content="<%= homeTitle %>">
+  <% if (pageDescription) { %>
+  <meta property="og:description" content="<%= pageDescription %>">
+  <% } %>
+  <% if (ogImage) { %>
+  <meta property="og:image" content="<%= ogImage %>">
+  <% } %>
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="<%= siteName %>">
+  <% if (faviconUrl) { %>
+  <link rel="icon" href="<%= faviconUrl %>">
+  <% } %>
+  <link rel="stylesheet" href="/site.css?v=<%= siteCss %>">
   <link rel="stylesheet" href="/style.css">
-  <link rel="stylesheet" href="/theme.css?bg=<%= encodeURIComponent(bg) %>">
+  <link rel="stylesheet" href="/theme.css?bg=<%= encodeURIComponent(bgColor) %>">
 </head>
 <body id="top">
-  <%- include('partials/header', { logoUrl, active }) %>
-  <main>
+  <%- include('partials/header', { logoUrl: logoSrc, active: activePage, appearance: appearanceData }) %>
+  <main class="home-page">
     <div class="grid">
-      <% projects.forEach(function(project) { %>
+      <% projectList.forEach(function(project) { %>
         <a href="/project/<%= project.slug %>" class="project-card">
           <img src="<%= project.cover_image %>" alt="<%= project.title %>" class="thumb" oncontextmenu="return false;">
           <h2><%= project.title %></h2>
@@ -19,5 +53,6 @@
       <% }); %>
     </div>
   </main>
+  <%- include('partials/footer', { content: contentData, currentYear: pageYear, logoUrl: logoSrc }) %>
 </body>
 </html>

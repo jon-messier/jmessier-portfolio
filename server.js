@@ -6,8 +6,13 @@ const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const session = require('cookie-session');
 const bcrypt = require('bcrypt');
 const path = require('path');
+const crypto = require('crypto');
+// Global look & feel (CSS tokens) and site copy (contact/footer/SEO), stored in `settings`.
+const { sanitizeAppearance, generateSiteCss, siteCssVersion } = require('./lib/appearance');
+const { sanitizeContent } = require('./lib/content');
 
 const app = express();
+app.disable('x-powered-by');
 
 // Options the admin can pick from (anything else sent to the server is ignored)
 const DEFAULT_BG = '#181818';             // site background: a little lighter than the old #111
@@ -15,6 +20,12 @@ const PAGE_WIDTHS = [640, 860, 1100, 1400]; // project page width, in pixels
 const BLOCK_GAPS = [0, 1, 2, 4];            // space between images on a project page, in rem
 const DEFAULT_WIDTH = 1100;
 const DEFAULT_BLOCK_GAP = 2;
+
+// Admin login throttling: 5 failures per IP in 15 minutes -> 15 minute lockout. Stored in Turso so
+// it works across Vercel's serverless instances.
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = 5;
+const LOGIN_BLOCK_MS = 15 * 60 * 1000;
 
 // ---------------------------------------------------------------------------
 // 1. Database
@@ -58,10 +69,10 @@ async function uniqueSlug(title, excludeId) {
 async function initDatabase() {
   await db.batch([
     `CREATE TABLE IF NOT EXISTS projects (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, cover_image TEXT, description TEXT, blocks TEXT DEFAULT '[]')`,
-    `CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT)`,
     `CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)`,
     `CREATE TABLE IF NOT EXISTS slug_redirects (old_slug TEXT PRIMARY KEY, project_id INTEGER)`,
-    `CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT, message TEXT, created_at TEXT, is_read INTEGER DEFAULT 0)`
+    `CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT, message TEXT, created_at TEXT, is_read INTEGER DEFAULT 0)`,
+    `CREATE TABLE IF NOT EXISTS login_attempts (key TEXT PRIMARY KEY, count INTEGER DEFAULT 0, first_at INTEGER DEFAULT 0, blocked_until INTEGER DEFAULT 0)`
   ]);
 
   const cols = toObjects(await db.execute('PRAGMA table_info(projects)')).map(c => c.name);
@@ -86,11 +97,8 @@ async function initDatabase() {
   }
   await tryExec('CREATE UNIQUE INDEX IF NOT EXISTS idx_projects_slug ON projects(slug)');
 
-  const admin = await db.execute("SELECT * FROM users WHERE username = 'admin'");
-  if (admin.rows.length === 0) {
-    const hashedPassword = bcrypt.hashSync('password123', 10);
-    await db.execute({ sql: "INSERT INTO users (username, password) VALUES (?, ?)", args: ['admin', hashedPassword] });
-  }
+  // Admin credentials deliberately live in environment variables only (see section 8).
+  // Never seed a default username/password into the database again.
   await db.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('logo_url', '')");
   await db.execute({ sql: "INSERT OR IGNORE INTO settings (key, value) VALUES ('bg_color', ?)", args: [DEFAULT_BG] });
 }
@@ -116,11 +124,31 @@ app.use(express.json());
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Basic security headers. A full CSP is intentionally omitted: the public pages render admin-approved
+// embed iframes and the admin page uses inline scripts/styles.
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'self'");
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  next();
+});
+// Nothing behind the login should be cached or indexed.
+app.use(['/admin', '/login', '/api', '/logout'], (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  next();
+});
+
 // Keep the login in a signed cookie, not server memory. On Vercel each request can hit a
 // different server instance, so in-memory sessions get "forgotten" (→ "Unauthorized").
+// The cookie name changed from "session" in the env-credentials release: that deliberately
+// invalidates every cookie issued under the old default password.
 app.set('trust proxy', 1);
 app.use(session({
-  name: 'session',
+  name: 'admin_session',
   keys: [process.env.SESSION_SECRET],
   maxAge: 7 * 24 * 60 * 60 * 1000, // stay logged in for 7 days
   sameSite: 'lax',
@@ -148,10 +176,25 @@ const getSettings = async () => {
   return settings;
 };
 
-// Values every public page needs (logo + site background color)
-const siteInfo = async () => {
+// settings values are stored as text; appearance/content are JSON blobs.
+const parseSettingJson = (value) => {
+  if (typeof value !== 'string' || !value) return null;
+  try { return JSON.parse(value); } catch (err) { return null; }
+};
+
+// Values every public page needs: branding, background, generated appearance tokens and site copy.
+const getSite = async () => {
   const s = await getSettings();
-  return { logoUrl: s.logo_url || '', siteBg: isColor(s.bg_color) ? s.bg_color : DEFAULT_BG };
+  const appearance = sanitizeAppearance(parseSettingJson(s.appearance));
+  const content = sanitizeContent(parseSettingJson(s.content));
+  return {
+    logoUrl: s.logo_url || '',
+    siteBg: isColor(s.bg_color) ? s.bg_color : DEFAULT_BG,
+    appearance,
+    content,
+    siteCssVersion: siteCssVersion(appearance),
+    currentYear: new Date().getFullYear()
+  };
 };
 
 // Guarantee an array is returned, even if the database double-stringified it
@@ -240,6 +283,19 @@ app.get('/theme.css', (req, res) => {
   res.type('text/css').set('Cache-Control', 'public, max-age=31536000, immutable').send(themeCss(bg));
 });
 
+// Global appearance tokens (grid columns, type, header, etc). The ?v= query is a hash of the CSS,
+// so the immutable cache is safe: any settings change changes the URL.
+app.get('/site.css', async (req, res) => {
+  try {
+    const s = await getSettings();
+    const css = generateSiteCss(sanitizeAppearance(parseSettingJson(s.appearance)));
+    res.type('text/css').set('Cache-Control', 'public, max-age=31536000, immutable').send(css);
+  } catch (err) {
+    console.error('Site CSS error:', err);
+    res.status(500).type('text/css').send(':root{}');
+  }
+});
+
 // ---------------------------------------------------------------------------
 // 6. Uploads straight to Cloudflare R2 (images never pass through Vercel)
 // ---------------------------------------------------------------------------
@@ -266,8 +322,8 @@ app.post('/api/upload', requireLoginApi, async (req, res) => {
 app.get('/', async (req, res) => {
   try {
     const result = await db.execute(`SELECT id, title, slug, cover_image FROM projects WHERE hidden = 0 ${ORDER}`);
-    const site = await siteInfo();
-    res.render('index', { projects: toObjects(result), logoUrl: site.logoUrl, bg: site.siteBg, active: 'portfolio' });
+    const site = await getSite();
+    res.render('index', Object.assign({}, site, { projects: toObjects(result), bg: site.siteBg, active: 'portfolio' }));
   } catch (err) {
     console.error(err);
     res.status(500).send("Error loading homepage.");
@@ -297,15 +353,14 @@ app.get('/project/:slug', async (req, res) => {
     if (project.hidden && !req.session.loggedIn) return res.status(404).send('Project not found');
 
     const others = await db.execute({ sql: `SELECT title, slug, cover_image FROM projects WHERE id != ? AND hidden = 0 ${ORDER}`, args: [project.id] });
-    const site = await siteInfo();
-    res.render('project', {
+    const site = await getSite();
+    res.render('project', Object.assign({}, site, {
       project,
       otherProjects: toObjects(others),
-      logoUrl: site.logoUrl,
       bg: project.bg_color || site.siteBg,
       active: 'portfolio',
       isPreview: project.hidden
-    });
+    }));
   } catch (err) {
     console.error(err);
     res.status(500).send("Error loading project.");
@@ -313,8 +368,8 @@ app.get('/project/:slug', async (req, res) => {
 });
 
 app.get('/contact', async (req, res) => {
-  const site = await siteInfo();
-  res.render('contact', { logoUrl: site.logoUrl, bg: site.siteBg, active: 'contact', values: {}, errors: {}, sent: req.query.sent === '1' });
+  const site = await getSite();
+  res.render('contact', Object.assign({}, site, { bg: site.siteBg, active: 'contact', values: {}, errors: {}, sent: req.query.sent === '1' }));
 });
 
 app.post('/contact', async (req, res) => {
@@ -334,9 +389,9 @@ app.post('/contact', async (req, res) => {
   if (!values.message) errors.message = 'Please enter a message.';
   else if (values.message.length > 5000) errors.message = 'Please keep your message under 5,000 characters.';
 
-  const site = await siteInfo();
+  const site = await getSite();
   if (Object.keys(errors).length) {
-    return res.status(400).render('contact', { logoUrl: site.logoUrl, bg: site.siteBg, active: 'contact', values, errors, sent: false });
+    return res.status(400).render('contact', Object.assign({}, site, { bg: site.siteBg, active: 'contact', values, errors, sent: false }));
   }
   try {
     await db.execute({
@@ -347,29 +402,119 @@ app.post('/contact', async (req, res) => {
   } catch (err) {
     console.error("Contact save error:", err);
     errors.form = "Sorry, your message couldn't be sent. Please try again in a minute.";
-    res.status(500).render('contact', { logoUrl: site.logoUrl, bg: site.siteBg, active: 'contact', values, errors, sent: false });
+    res.status(500).render('contact', Object.assign({}, site, { bg: site.siteBg, active: 'contact', values, errors, sent: false }));
   }
 });
 
 // ---------------------------------------------------------------------------
 // 8. Login + admin page
 // ---------------------------------------------------------------------------
-app.get('/login', (req, res) => res.render('login'));
+// Credentials come ONLY from the environment (Vercel/local .env), never from the database:
+//   ADMIN_USERNAME + ADMIN_PASSWORD       - plaintext password, compared in constant time
+//   ADMIN_USERNAME + ADMIN_PASSWORD_HASH  - optional bcrypt hash; wins when both are present
+// If no password form is configured, login fails closed with a setup message.
+const adminCredentials = () => ({
+  username: String(process.env.ADMIN_USERNAME || '').trim(),
+  password: String(process.env.ADMIN_PASSWORD || ''),
+  hash: String(process.env.ADMIN_PASSWORD_HASH || '')
+});
+
+// Constant-time string compare (hashing first makes the lengths match).
+const safeEqual = (a, b) => {
+  const digest = (value) => crypto.createHash('sha256').update(String(value)).digest();
+  return crypto.timingSafeEqual(digest(a), digest(b));
+};
+
+// Durable throttling: 5 failed attempts per IP in 15 minutes, then a 15 minute lockout.
+async function loginThrottle(key) {
+  const now = Date.now();
+  try {
+    const row = toObjects(await db.execute({ sql: "SELECT * FROM login_attempts WHERE key = ?", args: [key] }))[0];
+    if (!row) return { blocked: false };
+    if (Number(row.blocked_until) > now) return { blocked: true, retryAfter: Number(row.blocked_until) - now };
+    if (now - Number(row.first_at) > LOGIN_WINDOW_MS) return { blocked: false };
+    return { blocked: false };
+  } catch (err) {
+    console.error('Login throttle read failed:', err.message);
+    return { blocked: false }; // never lock the owner out because the DB read failed
+  }
+}
+
+async function recordLoginFailure(key) {
+  try {
+    const now = Date.now();
+    const row = toObjects(await db.execute({ sql: "SELECT * FROM login_attempts WHERE key = ?", args: [key] }))[0];
+    let count = 1;
+    let firstAt = now;
+    if (row && now - Number(row.first_at) <= LOGIN_WINDOW_MS) {
+      count = (Number(row.count) || 0) + 1;
+      firstAt = Number(row.first_at);
+    }
+    const blockedUntil = count >= LOGIN_MAX_ATTEMPTS ? now + LOGIN_BLOCK_MS : 0;
+    await db.execute({
+      sql: "INSERT INTO login_attempts (key, count, first_at, blocked_until) VALUES (?, ?, ?, ?) ON CONFLICT(key) DO UPDATE SET count = excluded.count, first_at = excluded.first_at, blocked_until = excluded.blocked_until",
+      args: [key, count, firstAt, blockedUntil]
+    });
+  } catch (err) {
+    console.error('Login throttle write failed:', err.message);
+  }
+}
+
+async function clearLoginFailures(key) {
+  try { await db.execute({ sql: "DELETE FROM login_attempts WHERE key = ?", args: [key] }); }
+  catch (err) { console.error('Login throttle cleanup failed:', err.message); }
+}
+
+const loginKey = (req) => String(req.ip || req.headers['x-forwarded-for'] || 'unknown').slice(0, 80);
+
+app.get('/login', (req, res) => {
+  if (req.session.loggedIn) return res.redirect('/admin');
+  res.render('login', { error: '' });
+});
 
 app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-  try {
-    const result = await db.execute({ sql: "SELECT * FROM users WHERE username = ?", args: [username] });
-    const user = toObjects(result)[0];
-    if (user && bcrypt.compareSync(password, user.password)) {
-      req.session.loggedIn = true;
-      res.redirect('/admin');
-    } else {
-      res.send("Invalid credentials. <a href='/login'>Try again</a>");
-    }
-  } catch (err) {
-    res.status(500).send("Login error");
+  const { username = '', password = '' } = req.body || {};
+  const creds = adminCredentials();
+  if (!creds.username || (!creds.password && !creds.hash)) {
+    console.error('Admin login is not configured: set ADMIN_USERNAME and ADMIN_PASSWORD (or ADMIN_PASSWORD_HASH).');
+    return res.status(503).render('login', {
+      error: 'Admin login is not configured yet. Add ADMIN_USERNAME and ADMIN_PASSWORD to the Vercel environment variables, then redeploy.'
+    });
   }
+
+  const key = loginKey(req);
+  const throttle = await loginThrottle(key);
+  if (throttle.blocked) {
+    const minutes = Math.max(1, Math.ceil(throttle.retryAfter / 60000));
+    return res.status(429).render('login', { error: `Too many failed attempts. Try again in about ${minutes} minute${minutes === 1 ? '' : 's'}.` });
+  }
+
+  // Evaluate both checks on every request so a wrong username is not faster than a wrong password.
+  const usernameOk = safeEqual(String(username).trim(), creds.username);
+  let passwordOk = false;
+  try {
+    passwordOk = creds.hash
+      ? bcrypt.compareSync(String(password), creds.hash)
+      : safeEqual(String(password), creds.password);
+  } catch (err) {
+    // A malformed ADMIN_PASSWORD_HASH must fail closed, never crash the login route.
+    console.error('Admin password check failed (check ADMIN_PASSWORD_HASH):', err.message);
+  }
+
+  if (usernameOk && passwordOk) {
+    await clearLoginFailures(key);
+    req.session = { loggedIn: true, user: creds.username, at: Date.now() };
+    return res.redirect('/admin');
+  }
+
+  await recordLoginFailure(key);
+  await new Promise(resolve => setTimeout(resolve, 350)); // speed bump on top of the lockout
+  return res.status(401).render('login', { error: 'That username or password is not correct.' });
+});
+
+app.post('/logout', (req, res) => {
+  req.session = null;
+  res.redirect('/login');
 });
 
 app.get('/admin', requireLoginPage, async (req, res) => {
@@ -377,11 +522,22 @@ app.get('/admin', requireLoginPage, async (req, res) => {
     const projects = toObjects(await db.execute(`SELECT * FROM projects ${ORDER}`)).map(prepareProject);
     const messages = toObjects(await db.execute("SELECT * FROM messages ORDER BY id DESC"))
       .map(m => Object.assign(m, { is_read: Number(m.is_read) === 1 }));
-    const site = await siteInfo();
+    const site = await getSite();
+    const creds = adminCredentials();
+    // Read-only status for the admin's Security card. Never exposes the secret values themselves.
+    let legacyUsers = 0;
+    try { legacyUsers = Number(toObjects(await db.execute("SELECT COUNT(*) AS n FROM users"))[0].n) || 0; } catch (err) { /* table may not exist */ }
     res.render('admin', {
       projects, messages,
       logoUrl: site.logoUrl, siteBg: site.siteBg, defaultBg: DEFAULT_BG,
-      pageWidths: PAGE_WIDTHS, blockGaps: BLOCK_GAPS
+      pageWidths: PAGE_WIDTHS, blockGaps: BLOCK_GAPS,
+      appearance: site.appearance, content: site.content,
+      securityStatus: {
+        adminUserConfigured: !!creds.username,
+        adminPasswordConfigured: !!(creds.password || creds.hash),
+        sessionSecretConfigured: !!process.env.SESSION_SECRET,
+        legacyUsers
+      }
     });
   } catch (err) {
     console.error(err);
@@ -401,9 +557,13 @@ app.post('/api/projects', requireLoginApi, async (req, res) => {
     const cleanBlocks = normalizeBlocks(blocks);
     const slug = await uniqueSlug(title);
     const top = toObjects(await db.execute("SELECT COALESCE(MIN(sort_order), 0) AS m FROM projects"))[0].m;
+    // New projects inherit the global defaults from Admin > Site Settings > Project pages.
+    const site = await getSite();
+    const width = site.appearance.project.defaultWidth;
+    const gap = site.appearance.project.defaultGap;
     await db.execute({
-      sql: "INSERT INTO projects (title, cover_image, blocks, slug, hidden, sort_order) VALUES (?, ?, ?, ?, 0, ?)",
-      args: [String(title).trim(), firstImage(cleanBlocks), JSON.stringify(cleanBlocks), slug, Number(top) - 1]
+      sql: "INSERT INTO projects (title, cover_image, blocks, slug, hidden, sort_order, content_width, block_gap) VALUES (?, ?, ?, ?, 0, ?, ?, ?)",
+      args: [String(title).trim(), firstImage(cleanBlocks), JSON.stringify(cleanBlocks), slug, Number(top) - 1, width, gap]
     });
     res.json({ ok: true, slug });
   } catch (err) {
@@ -509,6 +669,93 @@ app.post('/api/settings', requireLoginApi, async (req, res) => {
   } catch (err) {
     console.error("Settings error:", err);
     res.status(500).json({ error: 'Could not save the setting: ' + err.message });
+  }
+});
+
+// Site-wide visual settings: homepage grid, typography, header, project-page defaults.
+app.post('/api/settings/appearance', requireLoginApi, async (req, res) => {
+  const raw = req.body && req.body.appearance;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return res.status(400).json({ error: 'No appearance settings were sent.' });
+  }
+  try {
+    const appearance = sanitizeAppearance(raw);
+    await db.execute({
+      sql: "INSERT INTO settings (key, value) VALUES ('appearance', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+      args: [JSON.stringify(appearance)]
+    });
+    res.json({ ok: true, appearance, version: siteCssVersion(appearance) });
+  } catch (err) {
+    console.error('Appearance save error:', err);
+    res.status(500).json({ error: 'Could not save the appearance settings: ' + err.message });
+  }
+});
+
+// Site-wide content: contact copy, footer + social links, SEO/sharing metadata.
+app.post('/api/settings/content', requireLoginApi, async (req, res) => {
+  const raw = req.body && req.body.content;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return res.status(400).json({ error: 'No site content was sent.' });
+  }
+  try {
+    const content = sanitizeContent(raw);
+    await db.execute({
+      sql: "INSERT INTO settings (key, value) VALUES ('content', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+      args: [JSON.stringify(content)]
+    });
+    res.json({ ok: true, content });
+  } catch (err) {
+    console.error('Content save error:', err);
+    res.status(500).json({ error: 'Could not save the content: ' + err.message });
+  }
+});
+
+// Duplicate a project (copy + layout) so it can be used as a starting point.
+app.post('/api/projects/:id/duplicate', requireLoginApi, async (req, res) => {
+  try {
+    const source = toObjects(await db.execute({ sql: "SELECT * FROM projects WHERE id = ?", args: [req.params.id] }))[0];
+    if (!source) return res.status(404).json({ error: 'This project no longer exists.' });
+    const title = String(source.title || 'Untitled') + ' (copy)';
+    const slug = await uniqueSlug(title);
+    const top = toObjects(await db.execute("SELECT COALESCE(MIN(sort_order), 0) AS m FROM projects"))[0].m;
+    await db.execute({
+      sql: `INSERT INTO projects (title, cover_image, description, blocks, slug, hidden, sort_order, bg_color, block_gap, content_width)
+            VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`,
+      args: [
+        title, source.cover_image || '', source.description || '', source.blocks || '[]', slug, Number(top) - 1,
+        source.bg_color || '',
+        source.block_gap === null || source.block_gap === undefined || source.block_gap === '' ? DEFAULT_BLOCK_GAP : Number(source.block_gap),
+        source.content_width === null || source.content_width === undefined || source.content_width === '' ? DEFAULT_WIDTH : Number(source.content_width)
+      ]
+    });
+    const created = toObjects(await db.execute({ sql: "SELECT id, slug FROM projects WHERE slug = ?", args: [slug] }))[0];
+    res.json({ ok: true, id: created.id, slug: created.slug });
+  } catch (err) {
+    console.error('Project duplicate error:', err);
+    res.status(500).json({ error: 'Could not duplicate the project: ' + err.message });
+  }
+});
+
+// Download a JSON backup of the content (no contact-inbox messages, for privacy).
+app.get('/admin/backup.json', requireLoginPage, async (req, res) => {
+  try {
+    const [projects, settings, redirects] = await Promise.all([
+      db.execute(`SELECT * FROM projects ${ORDER}`),
+      db.execute("SELECT * FROM settings"),
+      db.execute("SELECT * FROM slug_redirects").catch(() => ({ rows: [], columns: [] }))
+    ]);
+    const payload = {
+      exported_at: new Date().toISOString(),
+      projects: toObjects(projects),
+      settings: toObjects(settings),
+      slug_redirects: toObjects(redirects)
+    };
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="portfolio-backup-${new Date().toISOString().slice(0, 10)}.json"`);
+    res.send(JSON.stringify(payload, null, 2));
+  } catch (err) {
+    console.error('Backup error:', err);
+    res.status(500).send('Could not create the backup.');
   }
 });
 

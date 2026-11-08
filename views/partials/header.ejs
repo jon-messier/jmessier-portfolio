@@ -1,12 +1,21 @@
-<header>
+<%
+  // appearance comes from the server (settings.appearance). Everything below is
+  // defensive so the site still renders if a setting is missing.
+  var headerAppearance = (typeof appearance === 'object' && appearance) ? appearance : {};
+  var headerConfig = (headerAppearance.header && typeof headerAppearance.header === 'object') ? headerAppearance.header : {};
+  var headerLayout = headerConfig.layout === 'logo-left' ? 'logo-left' : 'nav-left';
+  var headerLogo = (typeof logoUrl !== 'undefined' && logoUrl) ? String(logoUrl) : '';
+  var headerActive = (typeof active !== 'undefined' && active) ? String(active) : '';
+%>
+<header data-layout="<%= headerLayout %>">
   <nav id="main-nav">
     <ul>
-      <li><a href="/" class="<%= active === 'portfolio' ? 'active' : '' %>">Portfolio</a></li>
-      <li><a href="/contact" class="<%= active === 'contact' ? 'active' : '' %>">Contact</a></li>
+      <li><a href="/" class="<%= headerActive === 'portfolio' ? 'active' : '' %>"<% if (headerActive === 'portfolio') { %> aria-current="page"<% } %>>Portfolio</a></li>
+      <li><a href="/contact" class="<%= headerActive === 'contact' ? 'active' : '' %>"<% if (headerActive === 'contact') { %> aria-current="page"<% } %>>Contact</a></li>
     </ul>
   </nav>
   <a href="/" class="logo" aria-label="Jon Messier home">
-    <% if (logoUrl) { %><img src="<%= logoUrl %>" alt="JM Logo"><% } else { %><span class="logo-text">JM</span><% } %>
+    <% if (headerLogo) { %><img src="<%= headerLogo %>" alt="JM Logo"><% } else { %><span class="logo-text">JM</span><% } %>
   </a>
   <button class="menu-toggle" aria-label="Menu" onclick="document.getElementById('main-nav').classList.toggle('active')">☰</button>
 </header>

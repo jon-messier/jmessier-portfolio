@@ -8,14 +8,17 @@
   <style>
     * { box-sizing: border-box; }
     body { font-family: 'Open Sans', sans-serif; background: #111; color: #fff; margin: 0; padding: 2rem; }
-    .container { max-width: 900px; margin: 0 auto; }
+    .container { max-width: 1200px; margin: 0 auto; }
     h1, h2, h3 { font-weight: 600; margin-top: 0; }
     a { color: #8fa2ff; }
-    .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #333; padding-bottom: 1rem; }
+    .top-nav { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; border-bottom: 1px solid #333; padding-bottom: 1rem; }
+    .top-nav h1 { margin: 0; font-size: 1.5rem; }
+    .top-nav-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+    .top-nav-actions form { margin: 0; }
     .card { background: #222; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid #333; }
     .form-group { margin-bottom: 1rem; }
     label { display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px; }
-    input[type="text"], textarea, input[type="file"], select.input { width: 100%; padding: 10px; background: #111; border: 1px solid #444; color: #fff; border-radius: 4px; font-family: 'Open Sans'; }
+    input[type="text"], input[type="email"], input[type="url"], input[type="search"], input[type="number"], textarea, input[type="file"], select.input, select.field { width: 100%; padding: 10px; background: #111; border: 1px solid #444; color: #fff; border-radius: 4px; font-family: 'Open Sans', sans-serif; }
     .btn { background: #4361ee; color: #fff; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem; text-decoration: none; display: inline-block; font-family: inherit; }
     .btn:hover { background: #3049c4; }
     .btn:disabled { background: #555; cursor: not-allowed; }
@@ -122,7 +125,7 @@
     body.dragging .dz, body.dragging-files .dz { height: 26px; background: rgba(67, 97, 238, 0.08); border: 1px dashed rgba(67, 97, 238, 0.5); }
     .dz.over, .dz.file-over { background: rgba(67, 97, 238, 0.45) !important; }
     .editor-tools { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0 1.5rem; }
-    .editor-actions { display: flex; gap: 0.5rem; align-items: center; border-top: 1px solid #333; padding-top: 1rem; }
+    .editor-actions { display: flex; gap: 0.5rem; align-items: center; border-top: 1px solid #333; padding: 0.85rem 0 0.25rem; position: sticky; bottom: 0; z-index: 5; background: #1a1a1a; margin-top: 1rem; }
 
     /* Inbox */
     .inbox-empty { color: #777; text-align: center; padding: 2rem; }
@@ -150,10 +153,76 @@
     .bg-preview span { font-size: 0.85rem; opacity: 0.6; }
     .current-logo { max-height: 40px; max-width: 100px; filter: brightness(0) invert(1); }
 
+    /* Admin UX: toasts, filters, settings cards, preview, save bar */
+    .toast-stack { position: fixed; top: 1rem; right: 1rem; z-index: 1000; display: flex; flex-direction: column; gap: 0.5rem; max-width: 340px; }
+    .toast { background: #1e1e1e; border: 1px solid #444; border-left: 4px solid #4361ee; color: #fff; padding: 0.7rem 1rem; border-radius: 6px; font-size: 0.9rem; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45); cursor: pointer; animation: toast-in 0.15s ease-out; }
+    .toast.ok { border-left-color: #52b788; }
+    .toast.err { border-left-color: #e63946; }
+    .toast.leaving { opacity: 0; transform: translateY(-4px); transition: opacity 0.2s, transform 0.2s; }
+    @keyframes toast-in { from { opacity: 0; transform: translateY(-6px); } }
+
+    .list-filters { display: flex; align-items: center; gap: 1rem; margin: 0 0 1rem; flex-wrap: wrap; }
+    .list-filters input[type="search"] { max-width: 320px; }
+
+    .tab-intro { color: #aaa; font-size: 0.9rem; margin: -0.5rem 0 1.5rem; }
+    .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .card-head h2 { margin: 0 0 0.25rem; }
+    .field-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+    .field label { margin-bottom: 0.35rem; }
+    .field select { width: 100%; padding: 10px; background: #111; border: 1px solid #444; color: #fff; border-radius: 4px; font-family: 'Open Sans', sans-serif; }
+    .check-row { margin: 0 0 1rem; }
+
+    .social-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 0.6rem; }
+    .social-head label { margin: 0; }
+    .social-rows { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 0.75rem; }
+    .social-row { display: flex; gap: 0.5rem; align-items: center; }
+    .social-row input { flex: 1 1 160px; }
+    .social-row input.social-label { flex: 0 1 180px; }
+
+    .upload-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; }
+    .upload-row { display: flex; gap: 1rem; align-items: flex-start; }
+    .upload-thumb { width: 120px; height: 68px; background: #111; border: 1px dashed #444; border-radius: 4px; display: flex; align-items: center; justify-content: center; overflow: hidden; color: #777; font-size: 0.8rem; flex-shrink: 0; }
+    .upload-thumb.small { width: 48px; height: 48px; }
+    .upload-thumb img { width: 100%; height: 100%; object-fit: contain; background: #000; }
+    .upload-thumb.small img { object-fit: cover; }
+    .upload-item .hint { margin: 0.25rem 0 0; }
+
+    .preview-shell { background: #0a0a0a; border: 1px solid #333; border-radius: 6px; padding: 0.75rem; display: flex; justify-content: center; }
+    .preview-frame-wrap { width: 100%; transition: width 0.2s; }
+    .preview-frame-wrap.mobile { width: 390px; max-width: 100%; }
+    .preview-frame-wrap iframe { width: 100%; height: 540px; border: 0; border-radius: 4px; background: #181818; display: block; }
+    .preview-frame-wrap.mobile iframe { height: 620px; }
+    .preview-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .preview-actions .mini.active { background: #4361ee; border-color: #4361ee; color: #fff; }
+
+    .save-bar { position: sticky; bottom: 0; z-index: 20; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 0.85rem 1.25rem; margin: 0.25rem 0 0; box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.35); }
+    .save-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+    .save-note { font-size: 0.85rem; color: #777; }
+    .save-note.dirty { color: #ffd166; font-weight: 600; }
+    .save-note.dirty::before { content: '● '; }
+
+    .security-rows { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.75rem; }
+    .security-row { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.9rem; border-bottom: 1px solid #2a2a2a; padding-bottom: 0.4rem; }
+    .security-row:last-child { border-bottom: none; }
+    .sec-ok { color: #52b788; font-weight: 700; }
+    .sec-bad { color: #ff6b76; font-weight: 700; }
+    .sec-value { color: #ddd; }
+
     @media (max-width: 700px) {
       body { padding: 1rem; }
       .settings-row { grid-template-columns: 1fr; }
       .project-row { flex-wrap: wrap; }
+      .row-actions { width: 100%; justify-content: flex-end; flex-wrap: wrap; }
+      .top-nav { align-items: flex-start; }
+      .toast-stack { left: 1rem; right: 1rem; max-width: none; }
+      .save-bar { flex-direction: column; align-items: stretch; }
+      .save-actions { justify-content: flex-end; }
+      .preview-frame-wrap.mobile { width: 100%; }
+      .preview-frame-wrap iframe { height: 460px; }
+      .social-row { flex-wrap: wrap; }
+      .social-row input { flex: 1 1 100%; }
+      .upload-row { flex-direction: column; }
+      .field-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -161,7 +230,11 @@
   <div class="container">
     <div class="top-nav">
       <h1>Admin Dashboard</h1>
-      <a href="/" class="btn btn-outline" target="_blank">View Site &rarr;</a>
+      <div class="top-nav-actions">
+        <a href="/" class="btn btn-outline" target="_blank" rel="noopener">View Site &rarr;</a>
+        <a href="/admin/backup.json" class="btn btn-outline" title="Download a JSON backup of your projects and settings">Backup</a>
+        <form action="/logout" method="POST"><button type="submit" class="btn btn-outline">Log out</button></form>
+      </div>
     </div>
 
     <div class="tabs">
@@ -195,6 +268,12 @@
       </div>
       <p class="hint" style="margin-top:-0.5rem;">Drag ⠿ or use the arrows to set the order projects appear on your homepage. Hidden projects stay here but don't appear on the live site.</p>
 
+      <div class="list-filters">
+        <input type="search" id="projectSearch" placeholder="Search by title or project link…" aria-label="Search projects">
+        <label class="inline-check"><input type="checkbox" id="hiddenOnly"> Hidden only</label>
+      </div>
+      <p class="hint" id="noProjectMatch" hidden>No projects match your search.</p>
+
       <div id="projectList">
       <% projects.forEach(function(project) { %>
         <div class="project-item <%= project.hidden ? 'is-hidden' : '' %>" data-id="<%= project.id %>">
@@ -216,6 +295,7 @@
               <button type="button" class="mini f-down" title="Move down">↓</button>
               <button type="button" class="btn btn-sm btn-outline f-visibility"><%= project.hidden ? 'Show' : 'Hide' %></button>
               <button type="button" class="btn btn-sm f-edit">Edit</button>
+              <button type="button" class="btn btn-sm btn-outline f-duplicate" title="Make a copy of this project">Duplicate</button>
               <form action="/admin/delete/<%= project.id %>" method="POST" onsubmit="return confirm('Delete this project? This can\'t be undone. To keep it but take it off the site, use Hide instead.');"><button type="submit" class="btn btn-danger btn-sm">Delete</button></form>
             </div>
           </div>
@@ -290,24 +370,221 @@
 
     <!-- ===================== SITE SETTINGS TAB ===================== -->
     <section class="tab-panel" id="tab-settings" hidden>
+      <p class="tab-intro">Design and content for your public site. Changes stay a draft until you click <strong>Save changes</strong> at the bottom of this tab.</p>
+
       <div class="card">
-        <h2>Logo</h2>
-        <div class="form-group" style="display:flex; align-items:center; gap:2rem; margin:0;">
-          <div style="flex:1;">
-            <label for="logoInput">Site Logo (SVG/PNG)</label>
-            <input type="file" id="logoInput" accept="image/*">
-            <p id="logoStatus" class="status-msg"></p>
+        <h2>Header &amp; branding</h2>
+        <p class="hint">The top bar shown on every page, plus your site logo.</p>
+        <div class="field-grid">
+          <div class="field">
+            <label for="setHeaderLayout">Header layout</label>
+            <select id="setHeaderLayout" data-draft="appearance" data-path="header.layout">
+              <option value="nav-left">Nav left (default)</option>
+              <option value="logo-left">Logo left</option>
+            </select>
           </div>
-          <div style="background:#000; padding:1rem; border-radius:8px; min-width:150px; text-align:center;">
-            <span style="font-size:0.8rem; color:#aaa; display:block; margin-bottom:0.5rem;">Current:</span>
-            <% if (logoUrl) { %><img src="<%= logoUrl %>" alt="Current logo" class="current-logo"><% } else { %><span style="font-size:1.5rem; font-weight:700;">JM</span><% } %>
+          <div class="field">
+            <label for="setLogoHeight">Logo height (px)</label>
+            <input type="number" id="setLogoHeight" min="24" max="72" step="1" data-draft="appearance" data-path="header.logoHeight" data-kind="number">
+          </div>
+          <div class="field">
+            <label for="setHeaderPadY">Header padding, top/bottom (rem)</label>
+            <input type="number" id="setHeaderPadY" min="0.75" max="2.5" step="0.25" data-draft="appearance" data-path="header.paddingY" data-kind="number">
+          </div>
+          <div class="field">
+            <label for="setHeaderPadX">Header padding, left/right (rem)</label>
+            <input type="number" id="setHeaderPadX" min="1" max="5" step="0.25" data-draft="appearance" data-path="header.paddingX" data-kind="number">
+          </div>
+        </div>
+        <label class="inline-check check-row"><input type="checkbox" id="setHeaderSticky" data-draft="appearance" data-path="header.sticky" data-kind="bool"> Sticky header (stays at the top while scrolling)</label>
+
+        <div style="margin-top:1.25rem; padding-top:1.25rem; border-top:1px solid #333;">
+          <h3 style="font-size:0.95rem;">Site logo</h3>
+          <p class="hint">A new logo saves immediately, separately from the other settings on this tab.</p>
+          <div class="form-group" style="display:flex; align-items:center; gap:2rem; margin:0;">
+            <div style="flex:1;">
+              <label for="logoInput">Site Logo (SVG/PNG)</label>
+              <input type="file" id="logoInput" accept="image/*">
+              <p id="logoStatus" class="status-msg"></p>
+            </div>
+            <div style="background:#000; padding:1rem; border-radius:8px; min-width:150px; text-align:center;">
+              <span style="font-size:0.8rem; color:#aaa; display:block; margin-bottom:0.5rem;">Current:</span>
+              <% if (logoUrl) { %><img src="<%= logoUrl %>" alt="Current logo" class="current-logo"><% } else { %><span style="font-size:1.5rem; font-weight:700;">JM</span><% } %>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="card">
+        <h2>Homepage grid</h2>
+        <p class="hint">How the project grid looks on your homepage.</p>
+        <div class="field-grid">
+          <div class="field">
+            <label for="setHomeColumns">Columns (desktop)</label>
+            <input type="number" id="setHomeColumns" min="1" max="4" step="1" data-draft="appearance" data-path="home.columns" data-kind="number">
+          </div>
+          <div class="field">
+            <label for="setHomeColumnsMobile">Columns (mobile, up to 900px)</label>
+            <input type="number" id="setHomeColumnsMobile" min="1" max="2" step="1" data-draft="appearance" data-path="home.columnsMobile" data-kind="number">
+          </div>
+          <div class="field">
+            <label for="setHomeMax">Page width</label>
+            <select id="setHomeMax" data-draft="appearance" data-path="home.maxWidth" data-kind="number">
+              <option value="860">Narrow (860px)</option>
+              <option value="1100">Standard (1100px)</option>
+              <option value="1300">Wide (1300px)</option>
+              <option value="1500">Extra-wide (1500px)</option>
+              <option value="0">Full width</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="setHomeGapX">Column gap (rem)</label>
+            <input type="number" id="setHomeGapX" min="0" max="4" step="0.5" data-draft="appearance" data-path="home.gapX" data-kind="number">
+          </div>
+          <div class="field">
+            <label for="setHomeGapY">Row gap (rem)</label>
+            <input type="number" id="setHomeGapY" min="1" max="6" step="0.5" data-draft="appearance" data-path="home.gapY" data-kind="number">
+          </div>
+          <div class="field">
+            <label for="setHomeCoverRatio">Cover shape</label>
+            <select id="setHomeCoverRatio" data-draft="appearance" data-path="home.coverRatio">
+              <option value="4/3">4 : 3</option>
+              <option value="3/2">3 : 2</option>
+              <option value="16/9">16 : 9</option>
+              <option value="1/1">Square (1 : 1)</option>
+              <option value="natural">Natural (image's own shape)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="setHomeCoverFit">Cover fit</label>
+            <select id="setHomeCoverFit" data-draft="appearance" data-path="home.coverFit">
+              <option value="cover">Cover (fill the frame)</option>
+              <option value="contain">Contain (fit inside)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="setHomeTitleSize">Project title size (rem)</label>
+            <input type="number" id="setHomeTitleSize" min="0.8" max="1.6" step="0.05" data-draft="appearance" data-path="home.titleSize" data-kind="number">
+          </div>
+          <div class="field">
+            <label for="setHomeTitleWeight">Project title weight</label>
+            <select id="setHomeTitleWeight" data-draft="appearance" data-path="home.titleWeight" data-kind="number">
+              <option value="400">Regular (400)</option>
+              <option value="600">Semibold (600)</option>
+              <option value="700">Bold (700)</option>
+            </select>
+          </div>
+        </div>
+        <label class="inline-check check-row"><input type="checkbox" id="setHomeShowTitles" data-draft="appearance" data-path="home.showTitles" data-kind="bool"> Show project titles on the homepage</label>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>Live preview</h2>
+            <p class="hint" style="margin:0;">Your homepage with the unsaved settings above applied. Nothing is saved from this preview.</p>
+          </div>
+          <div class="preview-actions">
+            <button type="button" class="mini active" data-preview-width="desktop">Desktop</button>
+            <button type="button" class="mini" data-preview-width="mobile">Mobile</button>
+            <button type="button" class="mini" id="previewRefresh" title="Reload the preview from the server">↻ Refresh</button>
+          </div>
+        </div>
+        <div class="preview-shell">
+          <div class="preview-frame-wrap desktop" id="previewWrap">
+            <iframe id="livePreview" src="/" title="Homepage preview"></iframe>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Project pages &amp; More Projects</h2>
+        <p class="hint">The project page layout and the “More Projects” carousel at the bottom of it.</p>
+        <div class="field-grid">
+          <div class="field">
+            <label for="setProjectTitleSize">Project title size (rem)</label>
+            <input type="number" id="setProjectTitleSize" min="1.6" max="3.2" step="0.1" data-draft="appearance" data-path="project.titleSize" data-kind="number">
+          </div>
+          <div class="field">
+            <label for="setProjectDescWidth">Description width (px)</label>
+            <input type="number" id="setProjectDescWidth" min="420" max="860" step="20" data-draft="appearance" data-path="project.descriptionWidth" data-kind="number">
+          </div>
+          <div class="field">
+            <label for="setProjectDefaultWidth">New project page width</label>
+            <select id="setProjectDefaultWidth" data-draft="appearance" data-path="project.defaultWidth" data-kind="number">
+              <option value="640">Narrow (640px)</option>
+              <option value="860">Medium (860px)</option>
+              <option value="1100">Standard (1100px)</option>
+              <option value="1400">Wide (1400px)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="setProjectDefaultGap">New project image spacing</label>
+            <select id="setProjectDefaultGap" data-draft="appearance" data-path="project.defaultGap" data-kind="number">
+              <option value="0">None</option>
+              <option value="1">Tight</option>
+              <option value="2">Normal</option>
+              <option value="4">Wide</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="setCarouselItemWidth">Carousel item width (px)</label>
+            <input type="number" id="setCarouselItemWidth" min="200" max="360" step="10" data-draft="appearance" data-path="project.carouselItemWidth" data-kind="number">
+          </div>
+          <div class="field">
+            <label for="setCarouselCoverRatio">Carousel cover shape</label>
+            <select id="setCarouselCoverRatio" data-draft="appearance" data-path="project.carouselCoverRatio">
+              <option value="4/3">4 : 3</option>
+              <option value="3/2">3 : 2</option>
+              <option value="16/9">16 : 9</option>
+              <option value="1/1">Square (1 : 1)</option>
+            </select>
+          </div>
+        </div>
+        <label class="inline-check check-row"><input type="checkbox" id="setCarouselShow" data-draft="appearance" data-path="project.carouselShow" data-kind="bool"> Show the More Projects carousel on project pages</label>
+      </div>
+
+      <div class="card">
+        <h2>Typography</h2>
+        <p class="hint">Fonts and text sizes across the whole site.</p>
+        <div class="field-grid">
+          <div class="field">
+            <label for="setTypeFont">Font</label>
+            <select id="setTypeFont" data-draft="appearance" data-path="type.font">
+              <option value="open-sans">Open Sans (current)</option>
+              <option value="inter">Inter</option>
+              <option value="source-sans">Source Sans 3</option>
+              <option value="georgia">Georgia (serif)</option>
+              <option value="system">System UI font</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="setTypeScale">Text scale</label>
+            <input type="number" id="setTypeScale" min="0.9" max="1.15" step="0.01" data-draft="appearance" data-path="type.scale" data-kind="number">
+          </div>
+          <div class="field">
+            <label for="setTypeHeadingWeight">Heading weight</label>
+            <select id="setTypeHeadingWeight" data-draft="appearance" data-path="type.headingWeight" data-kind="number">
+              <option value="500">Medium (500)</option>
+              <option value="600">Semibold (600)</option>
+              <option value="700">Bold (700)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="setTypeNavSize">Nav link size (rem)</label>
+            <input type="number" id="setTypeNavSize" min="0.7" max="1" step="0.01" data-draft="appearance" data-path="type.navSize" data-kind="number">
+          </div>
+          <div class="field">
+            <label for="setTypeNavSpacing">Nav letter spacing (px)</label>
+            <input type="number" id="setTypeNavSpacing" min="0" max="3" step="0.5" data-draft="appearance" data-path="type.navSpacing" data-kind="number">
+          </div>
+        </div>
+        <label class="inline-check check-row"><input type="checkbox" id="setTypeNavUppercase" data-draft="appearance" data-path="type.navUppercase" data-kind="bool"> Uppercase navigation links</label>
+      </div>
+
+      <div class="card">
         <h2>Background Color</h2>
-        <p class="hint">Used on every page of your site. Projects with their own background color keep theirs. Text and the logo switch between light and dark automatically so they stay readable.</p>
+        <p class="hint">Used on every page of your site. Projects with their own background color keep theirs. Text and the logo switch between light and dark automatically so they stay readable. This card also saves on its own, and the main “Save changes” button picks up any change you make here.</p>
         <div class="bg-settings">
           <input type="color" id="siteBgPicker">
           <input type="text" id="siteBgHex" maxlength="7" spellcheck="false">
@@ -319,13 +596,110 @@
         </div>
         <p class="status-msg" id="siteBgStatus"></p>
       </div>
+
+      <div class="card">
+        <h2>Contact page</h2>
+        <p class="hint">The text on your Contact page. Messages still arrive in the Inbox tab.</p>
+        <div class="field-grid">
+          <div class="field">
+            <label for="setContactHeading">Heading</label>
+            <input type="text" id="setContactHeading" data-draft="content" data-path="contact.heading">
+          </div>
+          <div class="field">
+            <label for="setContactEmail">Contact email</label>
+            <input type="email" id="setContactEmail" placeholder="you@example.com" data-draft="content" data-path="contact.email">
+          </div>
+        </div>
+        <div class="field">
+          <label for="setContactIntro">Intro text</label>
+          <textarea id="setContactIntro" rows="3" data-draft="content" data-path="contact.intro"></textarea>
+        </div>
+        <div class="field">
+          <label for="setContactSuccess">Success message (after a message is sent)</label>
+          <textarea id="setContactSuccess" rows="2" data-draft="content" data-path="contact.success"></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Footer &amp; social links</h2>
+        <p class="hint">The footer at the bottom of every page.</p>
+        <label class="inline-check check-row"><input type="checkbox" id="setFooterShow" data-draft="content" data-path="footer.show" data-kind="bool"> Show the footer on public pages</label>
+        <div class="field" style="margin-bottom:1rem;">
+          <label for="setFooterText">Copyright text</label>
+          <input type="text" id="setFooterText" data-draft="content" data-path="footer.text" placeholder="Leave empty for “© current year + site name”">
+          <p class="hint">Leave empty to show “© current year + site name”.</p>
+        </div>
+        <div class="social-head">
+          <label>Social links (up to 4)</label>
+          <button type="button" class="mini" id="addSocial">+ Add link</button>
+        </div>
+        <div class="social-rows" id="socialRows"></div>
+        <p class="hint" id="socialHint">Each link needs a label and a URL starting with <code>http://</code> or <code>https://</code>.</p>
+      </div>
+
+      <div class="card">
+        <h2>SEO &amp; sharing</h2>
+        <p class="hint">Browser tab titles, search results and the image shown when your site is shared.</p>
+        <div class="field-grid">
+          <div class="field">
+            <label for="setSeoName">Site name</label>
+            <input type="text" id="setSeoName" data-draft="content" data-path="seo.siteName">
+          </div>
+          <div class="field">
+            <label for="setSeoHomeTitle">Homepage title</label>
+            <input type="text" id="setSeoHomeTitle" data-draft="content" data-path="seo.homeTitle">
+          </div>
+        </div>
+        <div class="field">
+          <label for="setSeoDescription">Meta description</label>
+          <textarea id="setSeoDescription" rows="3" placeholder="A sentence or two about your work, shown in search results." data-draft="content" data-path="seo.description"></textarea>
+        </div>
+        <div class="upload-grid">
+          <div class="upload-item">
+            <label>Social sharing image (OG image)</label>
+            <div class="upload-row">
+              <div class="upload-thumb" id="ogImagePreview"><span>None</span></div>
+              <div>
+                <button type="button" class="mini" id="ogImageUpload">Upload image…</button>
+                <p class="hint" id="ogImageStatus">Recommended 1200 × 630 px. Uploaded as-is.</p>
+              </div>
+            </div>
+          </div>
+          <div class="upload-item">
+            <label>Favicon</label>
+            <div class="upload-row">
+              <div class="upload-thumb small" id="faviconPreview"><span>None</span></div>
+              <div>
+                <button type="button" class="mini" id="faviconUpload">Upload icon…</button>
+                <p class="hint" id="faviconStatus">A square PNG or SVG icon.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Security status</h2>
+        <div class="security-rows" id="securityRows"></div>
+        <p class="hint">These values come from Vercel environment variables. To change them, update the env vars and redeploy the site.</p>
+      </div>
+
+      <div class="save-bar" id="settingsSaveBar">
+        <span class="save-note" id="settingsDirty">All settings saved</span>
+        <div class="save-actions">
+          <button type="button" class="btn btn-outline" id="settingsDiscard">Discard changes</button>
+          <button type="button" class="btn" id="settingsSave">Save changes</button>
+        </div>
+      </div>
     </section>
   </div>
 
-  <script id="admin-data" type="application/json"><%- JSON.stringify({ projects: projects, messages: messages, config: { siteBg: siteBg, defaultBg: defaultBg, pageWidths: pageWidths, blockGaps: blockGaps } }).replace(/</g, '\\u003c') %></script>
+  <div class="toast-stack" id="toasts" aria-live="polite"></div>
+
+  <script id="admin-data" type="application/json"><%- JSON.stringify({ projects: projects, messages: messages, appearance: locals.appearance || null, content: locals.content || null, securityStatus: locals.securityStatus || null, config: locals.config || { siteBg: locals.siteBg || locals.bg || '#181818', defaultBg: locals.defaultBg || '#181818', pageWidths: locals.pageWidths, blockGaps: locals.blockGaps } }).replace(/</g, '\\u003c') %></script>
   <script>
     const DATA = JSON.parse(document.getElementById('admin-data').textContent);
-    const CONFIG = DATA.config;
+    const CONFIG = Object.assign({ siteBg: '#181818', defaultBg: '#181818', pageWidths: [640, 860, 1100, 1400], blockGaps: [0, 1, 2, 4] }, DATA.config || {});
     const WIDTH_LABELS = { 640: 'Narrow (640px)', 860: 'Medium (860px)', 1100: 'Standard (1100px)', 1400: 'Wide (1400px)' };
     const GAP_LABELS = { 0: 'None', 1: 'Tight', 2: 'Normal', 4: 'Wide' };
 
@@ -364,6 +738,21 @@
       return data;
     }
 
+    // Toast notifications (top-right). Click one to dismiss it; they also fade out on their own.
+    const toastStack = document.getElementById('toasts');
+    function dismissToast(node) {
+      if (!node || !node.isConnected || node.classList.contains('leaving')) return;
+      node.classList.add('leaving');
+      setTimeout(() => node.remove(), 200);
+    }
+    function toast(message, kind, ms) {
+      if (!toastStack) return;
+      const node = el('div', { class: 'toast' + (kind ? ' ' + kind : ''), role: 'status', text: message });
+      node.addEventListener('click', () => dismissToast(node));
+      toastStack.append(node);
+      setTimeout(() => dismissToast(node), ms || (kind === 'err' ? 7000 : 4000));
+    }
+
     // ======================================================================
     // Tabs
     // ======================================================================
@@ -372,6 +761,7 @@
       document.querySelectorAll('.tab-panel').forEach(p => { p.hidden = p.id !== 'tab-' + name; });
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
       if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
+      document.dispatchEvent(new CustomEvent('tabchange', { detail: { tab: name } }));
     }
     document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
     showTab(location.hash.slice(1));
@@ -506,6 +896,7 @@
         form.submit();
       } catch (err) {
         setMsg(status, err.message, 'err');
+        toast(err.message, 'err');
       }
     });
 
@@ -580,6 +971,7 @@
       try {
         await api('/api/projects/order', { ids: items().map(it => Number(it.dataset.id)) });
         setMsg(status, 'Order saved.', 'ok');
+        toast('Project order saved.', 'ok', 2200);
       } catch (err) {
         setMsg(status, err.message, 'err');
       }
@@ -612,6 +1004,7 @@
           vis.textContent = hide ? 'Show' : 'Hide';
           ORIGINAL[id].hidden = hide;
           rowNote(id, hide ? 'Hidden from the live site.' : 'Visible on the live site.', 'ok');
+          toast(hide ? 'Project hidden from the live site.' : 'Project is visible on the live site.', 'ok', 2200);
         } catch (err) {
           rowNote(id, err.message, 'warn');
         } finally {
@@ -620,6 +1013,20 @@
       });
 
       item.querySelector('.f-edit').addEventListener('click', () => toggleEdit(id));
+
+      const dupBtn = item.querySelector('.f-duplicate');
+      dupBtn.addEventListener('click', async () => {
+        dupBtn.disabled = true;
+        try {
+          await api('/api/projects/' + id + '/duplicate');
+          toast('Project duplicated. Reloading the list…', 'ok');
+          location.reload();
+        } catch (err) {
+          dupBtn.disabled = false;
+          toast(err.message, 'err');
+        }
+      });
+
 
       // Drag a row by its ⠿ handle to reorder
       const handle = item.querySelector('.row-handle');
@@ -653,6 +1060,30 @@
       });
     });
     refreshArrows();
+
+    // Search + "Hidden only" filter for the project list
+    const projectSearch = document.getElementById('projectSearch');
+    const hiddenOnly = document.getElementById('hiddenOnly');
+    const noProjectMatch = document.getElementById('noProjectMatch');
+    function applyProjectFilter() {
+      const query = (projectSearch.value || '').trim().toLowerCase();
+      const onlyHidden = hiddenOnly.checked;
+      let shown = 0;
+      items().forEach(item => {
+        const title = item.querySelector('.row-title').textContent.toLowerCase();
+        const link = item.querySelector('.row-link').textContent.toLowerCase();
+        const hidden = item.classList.contains('is-hidden');
+        const matches = (!query || title.includes(query) || link.includes(query)) && (!onlyHidden || hidden);
+        item.hidden = !matches;
+        if (matches) shown++;
+      });
+      noProjectMatch.hidden = shown > 0 || items().length === 0;
+      refreshArrows();
+    }
+    projectSearch.addEventListener('input', applyProjectFilter);
+    projectSearch.addEventListener('search', applyProjectFilter);
+    hiddenOnly.addEventListener('change', applyProjectFilter);
+    applyProjectFilter();
 
     // ======================================================================
     // Layout editor
@@ -1045,6 +1476,7 @@
         setStatus(id, '');
         collapse(id);
         rowNote(id, 'Saved. Your site is updated.', 'ok');
+        toast('Project saved. Your site is updated.', 'ok');
       } catch (err) {
         setStatus(id, err.message, 'err');
       } finally {
@@ -1095,7 +1527,8 @@
     });
 
     window.addEventListener('beforeunload', e => {
-      if (Object.values(S).some(st => st.dirty || st.busy)) { e.preventDefault(); e.returnValue = ''; }
+      const projectDirty = Object.values(S).some(st => st.dirty || st.busy);
+      if (projectDirty || hasSettingsChanges()) { e.preventDefault(); e.returnValue = ''; }
     });
 
     // ======================================================================
@@ -1158,6 +1591,7 @@
         MESSAGES.splice(MESSAGES.indexOf(m), 1);
         renderInbox();
         setMsg(document.getElementById('inboxStatus'), 'Message deleted.', 'ok');
+        toast('Message deleted.', 'ok', 2500);
       } catch (err) {
         setMsg(document.getElementById('inboxStatus'), err.message, 'err');
       }
@@ -1165,41 +1599,509 @@
     renderInbox();
 
     // ======================================================================
-    // Site settings: background color
+    // Site settings: appearance + content drafts, live preview, save bar
     // ======================================================================
-    (function () {
-      const picker = document.getElementById('siteBgPicker');
-      const hex = document.getElementById('siteBgHex');
-      const preview = document.getElementById('siteBgPreview');
-      const status = document.getElementById('siteBgStatus');
-      const isHex = (v) => /^#[0-9a-fA-F]{6}$/.test(v);
-      function show(color) {
-        picker.value = color; hex.value = color;
-        const [r, g, b] = [1, 3, 5].map(i => parseInt(color.slice(i, i + 2), 16));
-        const dark = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 < 0.55;
-        preview.style.background = color;
-        preview.style.color = dark ? '#fff' : '#111';
-      }
-      show(CONFIG.siteBg);
-      picker.addEventListener('input', () => { show(picker.value); setMsg(status, 'Not saved yet.'); });
-      hex.addEventListener('input', () => {
-        let v = hex.value.trim();
-        if (v && v[0] !== '#') v = '#' + v;
-        if (isHex(v)) { show(v.toLowerCase()); setMsg(status, 'Not saved yet.'); }
-      });
-      document.getElementById('siteBgReset').addEventListener('click', () => { show(CONFIG.defaultBg); setMsg(status, 'Reset to the default. Click Save Background to apply it.'); });
-      document.getElementById('siteBgSave').addEventListener('click', async () => {
-        const color = picker.value;
-        try {
-          await api('/api/settings', { bg_color: color });
-          CONFIG.siteBg = color;
-          Object.keys(S).forEach(id => { if (!S[id].bg) syncBgControls(id); });
-          setMsg(status, 'Saved. Every page without its own background color now uses this one.', 'ok');
-        } catch (err) {
-          setMsg(status, err.message, 'err');
+    // These defaults mirror APPEARANCE-CONTRACT.md. They only make the form usable;
+    // the server always validates and its sanitized response is treated as authoritative.
+    const APPEARANCE_DEFAULTS = {
+      home: { columns: 3, columnsMobile: 1, maxWidth: 1100, gapX: 2, gapY: 4, coverRatio: '4/3', coverFit: 'cover', titleSize: 1, titleWeight: 400, showTitles: true },
+      project: { titleSize: 2.5, descriptionWidth: 600, defaultWidth: 1100, defaultGap: 2, carouselShow: true, carouselItemWidth: 280, carouselCoverRatio: '4/3' },
+      type: { font: 'open-sans', scale: 1, headingWeight: 600, navSize: 0.85, navSpacing: 1.5, navUppercase: true },
+      header: { layout: 'nav-left', logoHeight: 40, paddingY: 1.5, paddingX: 4, sticky: true }
+    };
+    const CONTENT_DEFAULTS = {
+      seo: { siteName: 'Jon Messier', homeTitle: 'Jon Messier | Portfolio', description: '', ogImage: '', favicon: '' },
+      contact: { heading: 'Contact', intro: "Have a project in mind or a question? Send a message and I'll get back to you.", success: 'Thanks! Your message was sent.', email: '' },
+      footer: { show: true, text: '', social: [] }
+    };
+
+    const isHexColor = (v) => typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v);
+    const isHttpUrl = (v) => typeof v === 'string' && /^https?:\/\//i.test(v);
+    const clampIntValue = (v, min, max, fallback) => { const n = parseInt(v, 10); return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback; };
+    const clampNumberValue = (v, min, max, fallback) => { const n = Number(v); return Number.isFinite(n) ? Math.min(max, Math.max(min, Math.round(n * 100) / 100)) : fallback; };
+    const pickOne = (v, allowed, fallback) => (allowed.includes(v) ? v : fallback);
+    const pickNumber = (v, allowed, fallback) => (allowed.map(Number).includes(Number(v)) ? Number(v) : fallback);
+    const asBool = (v, fallback) => (typeof v === 'boolean' ? v : fallback);
+    const asText = (v, fallback) => (typeof v === 'string' ? v : fallback);
+
+    // Clamps every appearance value to the enums/range in the contract, filling in defaults.
+    function sanitizeAppearance(raw) {
+      const src = raw && typeof raw === 'object' ? raw : {};
+      const home = src.home || {}, project = src.project || {}, type = src.type || {}, header = src.header || {};
+      return {
+        home: {
+          columns: clampIntValue(home.columns, 1, 4, 3),
+          columnsMobile: clampIntValue(home.columnsMobile, 1, 2, 1),
+          maxWidth: pickNumber(home.maxWidth, [860, 1100, 1300, 1500, 0], 1100),
+          gapX: clampNumberValue(home.gapX, 0, 4, 2),
+          gapY: clampNumberValue(home.gapY, 1, 6, 4),
+          coverRatio: pickOne(home.coverRatio, ['4/3', '3/2', '16/9', '1/1', 'natural'], '4/3'),
+          coverFit: pickOne(home.coverFit, ['cover', 'contain'], 'cover'),
+          titleSize: clampNumberValue(home.titleSize, 0.8, 1.6, 1),
+          titleWeight: pickNumber(home.titleWeight, [400, 600, 700], 400),
+          showTitles: asBool(home.showTitles, true)
+        },
+        project: {
+          titleSize: clampNumberValue(project.titleSize, 1.6, 3.2, 2.5),
+          descriptionWidth: clampIntValue(project.descriptionWidth, 420, 860, 600),
+          defaultWidth: pickNumber(project.defaultWidth, [640, 860, 1100, 1400], 1100),
+          defaultGap: pickNumber(project.defaultGap, [0, 1, 2, 4], 2),
+          carouselShow: asBool(project.carouselShow, true),
+          carouselItemWidth: clampIntValue(project.carouselItemWidth, 200, 360, 280),
+          carouselCoverRatio: pickOne(project.carouselCoverRatio, ['4/3', '3/2', '16/9', '1/1'], '4/3')
+        },
+        type: {
+          font: pickOne(type.font, ['open-sans', 'inter', 'source-sans', 'georgia', 'system'], 'open-sans'),
+          scale: clampNumberValue(type.scale, 0.9, 1.15, 1),
+          headingWeight: pickNumber(type.headingWeight, [500, 600, 700], 600),
+          navSize: clampNumberValue(type.navSize, 0.7, 1, 0.85),
+          navSpacing: clampNumberValue(type.navSpacing, 0, 3, 1.5),
+          navUppercase: asBool(type.navUppercase, true)
+        },
+        header: {
+          layout: pickOne(header.layout, ['nav-left', 'logo-left'], 'nav-left'),
+          logoHeight: clampIntValue(header.logoHeight, 24, 72, 40),
+          paddingY: clampNumberValue(header.paddingY, 0.75, 2.5, 1.5),
+          paddingX: clampNumberValue(header.paddingX, 1, 5, 4),
+          sticky: asBool(header.sticky, true)
         }
+      };
+    }
+
+    // Same idea for content; social links are capped at 4 and only http(s) images survive.
+    function sanitizeContent(raw) {
+      const src = raw && typeof raw === 'object' ? raw : {};
+      const seo = src.seo || {}, contact = src.contact || {}, footer = src.footer || {};
+      const social = Array.isArray(footer.social)
+        ? footer.social.slice(0, 4).map(s => ({ label: asText(s && s.label, ''), url: asText(s && s.url, '') }))
+        : [];
+      return {
+        seo: {
+          siteName: asText(seo.siteName, CONTENT_DEFAULTS.seo.siteName),
+          homeTitle: asText(seo.homeTitle, CONTENT_DEFAULTS.seo.homeTitle),
+          description: asText(seo.description, ''),
+          ogImage: isHttpUrl(seo.ogImage) ? seo.ogImage : '',
+          favicon: isHttpUrl(seo.favicon) ? seo.favicon : ''
+        },
+        contact: {
+          heading: asText(contact.heading, CONTENT_DEFAULTS.contact.heading),
+          intro: asText(contact.intro, CONTENT_DEFAULTS.contact.intro),
+          success: asText(contact.success, CONTENT_DEFAULTS.contact.success),
+          email: asText(contact.email, '')
+        },
+        footer: { show: asBool(footer.show, true), text: asText(footer.text, ''), social }
+      };
+    }
+
+    const DRAFTS = {
+      appearance: sanitizeAppearance(DATA.appearance),
+      content: sanitizeContent(DATA.content)
+    };
+    const SAVED = { appearance: clone(DRAFTS.appearance), content: clone(DRAFTS.content) };
+    const BG = {
+      saved: isHexColor(CONFIG.siteBg) ? CONFIG.siteBg : '#181818',
+      value: isHexColor(CONFIG.siteBg) ? CONFIG.siteBg : '#181818'
+    };
+
+    // ---- Draft object path helpers ----
+    function getPath(obj, path) {
+      return path.split('.').reduce((node, key) => (node == null ? undefined : node[key]), obj);
+    }
+    function setPath(obj, path, value) {
+      const keys = path.split('.');
+      let node = obj;
+      for (let i = 0; i < keys.length - 1; i++) {
+        if (node[keys[i]] == null || typeof node[keys[i]] !== 'object') node[keys[i]] = {};
+        node = node[keys[i]];
+      }
+      node[keys[keys.length - 1]] = value;
+    }
+    function syncField(node) {
+      const value = getPath(DRAFTS[node.dataset.draft], node.dataset.path);
+      if (node.type === 'checkbox') node.checked = !!value;
+      else node.value = value == null ? '' : String(value);
+    }
+    function syncAppearanceControls() {
+      document.querySelectorAll('[data-draft="appearance"]').forEach(syncField);
+    }
+    function syncContentControls() {
+      document.querySelectorAll('[data-draft="content"]').forEach(syncField);
+      renderSocialRows();
+      renderSeoPreviews();
+    }
+
+    // ---- Dirty state + save bar ----
+    function hasSettingsChanges() {
+      return JSON.stringify(DRAFTS.appearance) !== JSON.stringify(SAVED.appearance)
+        || JSON.stringify(DRAFTS.content) !== JSON.stringify(SAVED.content)
+        || BG.value !== BG.saved;
+    }
+    function updateSaveBar() {
+      const dirty = hasSettingsChanges();
+      const note = document.getElementById('settingsDirty');
+      note.textContent = dirty ? 'Unsaved changes' : 'All settings saved';
+      note.classList.toggle('dirty', dirty);
+      document.getElementById('settingsSave').disabled = !dirty;
+      document.getElementById('settingsDiscard').disabled = !dirty;
+    }
+    let previewTimer = null;
+    function settingsTouched() {
+      updateSaveBar();
+      clearTimeout(previewTimer);
+      previewTimer = setTimeout(applyPreview, 120);
+    }
+
+    // ---- Every [data-draft] control edits the draft; numbers clamp on commit ----
+    document.querySelectorAll('[data-draft]').forEach(node => {
+      const kind = node.dataset.kind || (node.type === 'checkbox' ? 'bool' : 'text');
+      const draftName = node.dataset.draft;
+      const path = node.dataset.path;
+      const apply = (commit) => {
+        if (kind === 'bool') {
+          setPath(DRAFTS[draftName], path, node.checked);
+        } else if (kind === 'number') {
+          const raw = String(node.value).trim();
+          if (raw === '' || !Number.isFinite(Number(raw))) { if (commit) syncField(node); return; }
+          let value = Number(raw);
+          if (commit) {
+            // input[type=number] exposes min/max; <select> does not (its options are already valid).
+            const hasMin = node.min != null && node.min !== '' && Number.isFinite(Number(node.min));
+            const hasMax = node.max != null && node.max !== '' && Number.isFinite(Number(node.max));
+            value = Math.min(hasMax ? Number(node.max) : Infinity, Math.max(hasMin ? Number(node.min) : -Infinity, value));
+            if (String(value) !== node.value) node.value = String(value);
+          }
+          setPath(DRAFTS[draftName], path, value);
+        } else {
+          setPath(DRAFTS[draftName], path, node.value);
+        }
+        settingsTouched();
+      };
+      node.addEventListener('input', () => apply(false));
+      node.addEventListener('change', () => apply(true));
+    });
+
+    // ---- Live preview of the homepage (unsaved draft applied as CSS variables) ----
+    const previewFrame = document.getElementById('livePreview');
+    const previewWrap = document.getElementById('previewWrap');
+    const FONT_STACKS = {
+      'open-sans': "'Open Sans', sans-serif",
+      inter: "'Inter', sans-serif",
+      'source-sans': "'Source Sans 3', sans-serif",
+      georgia: "Georgia, 'Times New Roman', serif",
+      system: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+    };
+    function previewDoc() {
+      try { return previewFrame.contentDocument; } catch (e) { return null; }
+    }
+    // Exact custom property names/formats from the contract (§2).
+    function appearanceCssVars(a) {
+      const ratio = (r) => (r === 'natural' ? 'auto' : r.split('/').join(' / '));
+      return {
+        '--font-body': FONT_STACKS[a.type.font],
+        '--font-size': String(+(16 * a.type.scale).toFixed(2)) + 'px',
+        '--heading-weight': String(a.type.headingWeight),
+        '--nav-size': a.type.navSize + 'rem',
+        '--nav-spacing': a.type.navSpacing + 'px',
+        '--nav-transform': a.type.navUppercase ? 'uppercase' : 'none',
+        '--logo-height': a.header.logoHeight + 'px',
+        '--header-position': a.header.sticky ? 'sticky' : 'static',
+        '--header-pad-y': a.header.paddingY + 'rem',
+        '--header-pad-x': a.header.paddingX + 'rem',
+        '--home-cols': String(a.home.columns),
+        '--home-cols-mobile': String(a.home.columnsMobile),
+        '--home-max': a.home.maxWidth === 0 ? 'none' : a.home.maxWidth + 'px',
+        '--home-gap-x': a.home.gapX + 'rem',
+        '--home-gap-y': a.home.gapY + 'rem',
+        '--home-cover-ratio': ratio(a.home.coverRatio),
+        '--home-cover-fit': a.home.coverFit,
+        '--home-title-size': a.home.titleSize + 'rem',
+        '--home-title-weight': String(a.home.titleWeight),
+        '--home-title-display': a.home.showTitles ? 'block' : 'none',
+        '--project-title-size': a.project.titleSize + 'rem',
+        '--project-desc-width': a.project.descriptionWidth + 'px',
+        '--carousel-item-width': a.project.carouselItemWidth + 'px',
+        '--carousel-cover-ratio': ratio(a.project.carouselCoverRatio)
+      };
+    }
+    function footerTextPreview() {
+      const footer = DRAFTS.content.footer;
+      if (footer.text && footer.text.trim()) return footer.text.trim();
+      const name = DRAFTS.content.seo.siteName || '';
+      return ('© ' + new Date().getFullYear() + ' ' + name).trim();
+    }
+    function applyFooterPreview(doc) {
+      const footer = doc.querySelector('footer');
+      if (!footer) return;
+      footer.hidden = !DRAFTS.content.footer.show;
+      const text = footer.querySelector('[data-footer-text], .footer-text');
+      if (text) text.textContent = footerTextPreview();
+      const social = footer.querySelector('[data-footer-social], .footer-social');
+      if (social) {
+        const links = DRAFTS.content.footer.social.filter(s => s.label.trim() && isHttpUrl(s.url));
+        social.replaceChildren(...links.map(s => el('a', { href: s.url, target: '_blank', rel: 'noopener', text: s.label })));
+      }
+    }
+    function applyPreview() {
+      const doc = previewDoc();
+      if (!doc || !doc.documentElement || !doc.body) return;
+      const style = doc.documentElement.style;
+      const vars = appearanceCssVars(DRAFTS.appearance);
+      Object.keys(vars).forEach(name => style.setProperty(name, vars[name]));
+      const header = doc.querySelector('header');
+      if (header) header.dataset.layout = DRAFTS.appearance.header.layout;
+      applyFooterPreview(doc);
+    }
+    function refreshPreview() {
+      previewFrame.src = '/?preview=' + Date.now();
+    }
+    previewFrame.addEventListener('load', applyPreview);
+    document.getElementById('previewRefresh').addEventListener('click', refreshPreview);
+    document.querySelectorAll('[data-preview-width]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-preview-width]').forEach(b => b.classList.toggle('active', b === btn));
+        const mobile = btn.dataset.previewWidth === 'mobile';
+        previewWrap.classList.toggle('mobile', mobile);
+        previewWrap.classList.toggle('desktop', !mobile);
       });
-    })();
+    });
+    document.addEventListener('tabchange', e => { if (e.detail && e.detail.tab === 'settings') applyPreview(); });
+
+    // ---- Footer social links (max 4 rows) ----
+    const socialRows = document.getElementById('socialRows');
+    const addSocialBtn = document.getElementById('addSocial');
+    function socialRow(entry) {
+      const labelInput = el('input', { type: 'text', class: 'social-label', placeholder: 'Label (e.g. Instagram)', 'aria-label': 'Social link label' });
+      const urlInput = el('input', { type: 'url', placeholder: 'https://…', 'aria-label': 'Social link URL' });
+      labelInput.value = entry.label || '';
+      urlInput.value = entry.url || '';
+      labelInput.addEventListener('input', () => { entry.label = labelInput.value; settingsTouched(); });
+      urlInput.addEventListener('input', () => { entry.url = urlInput.value; settingsTouched(); });
+      const remove = mini('Remove', 'Remove this social link', () => {
+        const at = DRAFTS.content.footer.social.indexOf(entry);
+        if (at !== -1) DRAFTS.content.footer.social.splice(at, 1);
+        settingsTouched();
+        renderSocialRows();
+      }, { class: 'mini danger' });
+      return el('div', { class: 'social-row' }, labelInput, urlInput, remove);
+    }
+    function renderSocialRows() {
+      const social = DRAFTS.content.footer.social;
+      socialRows.replaceChildren();
+      social.forEach(entry => socialRows.append(socialRow(entry)));
+      addSocialBtn.disabled = social.length >= 4;
+      addSocialBtn.title = social.length >= 4 ? 'You can have up to 4 social links' : 'Add a social link';
+    }
+    addSocialBtn.addEventListener('click', () => {
+      if (DRAFTS.content.footer.social.length >= 4) return;
+      DRAFTS.content.footer.social.push({ label: '', url: '' });
+      settingsTouched();
+      renderSocialRows();
+    });
+
+    // ---- SEO image uploads (uploaded as-is via uploadToR2, saved by the save bar) ----
+    const ogImagePreview = document.getElementById('ogImagePreview');
+    const faviconPreview = document.getElementById('faviconPreview');
+    function renderSeoPreviews() {
+      const seo = DRAFTS.content.seo;
+      ogImagePreview.replaceChildren(seo.ogImage ? el('img', { src: seo.ogImage, alt: 'OG image preview' }) : el('span', { text: 'None' }));
+      faviconPreview.replaceChildren(seo.favicon ? el('img', { src: seo.favicon, alt: 'Favicon preview' }) : el('span', { text: 'None' }));
+    }
+    async function uploadSeoImage(kind) {
+      const isOg = kind === 'og';
+      const button = document.getElementById(isOg ? 'ogImageUpload' : 'faviconUpload');
+      const status = document.getElementById(isOg ? 'ogImageStatus' : 'faviconStatus');
+      const files = await pickFiles(false);
+      if (!files.length) return;
+      button.disabled = true;
+      setMsg(status, 'Uploading...');
+      try {
+        // Upload as-is: social crawlers and browsers are picky about OG images/favicons in WebP.
+        const url = await uploadToR2(files[0]);
+        DRAFTS.content.seo[isOg ? 'ogImage' : 'favicon'] = url;
+        settingsTouched();
+        renderSeoPreviews();
+        setMsg(status, 'Uploaded. Click “Save changes” to publish it.', 'ok');
+        toast((isOg ? 'OG image' : 'Favicon') + ' uploaded. Save changes to publish.', 'ok');
+      } catch (err) {
+        setMsg(status, err.message, 'err');
+        toast(err.message, 'err');
+      } finally {
+        button.disabled = false;
+      }
+    }
+    document.getElementById('ogImageUpload').addEventListener('click', () => uploadSeoImage('og'));
+    document.getElementById('faviconUpload').addEventListener('click', () => uploadSeoImage('favicon'));
+
+    // ---- Read-only security status (DATA.securityStatus) ----
+    function renderSecurity() {
+      const host = document.getElementById('securityRows');
+      const status = DATA.securityStatus;
+      host.replaceChildren();
+      if (!status || typeof status !== 'object') {
+        host.append(el('p', { class: 'hint', text: 'This server build does not report security status yet.' }));
+        return;
+      }
+      const check = (label, ok) => el('div', { class: 'security-row' },
+        el('span', { text: label }),
+        el('span', { class: ok ? 'sec-ok' : 'sec-bad', text: ok ? '✓ Configured' : '✗ Not configured' }));
+      host.append(
+        check('Admin username', !!status.adminUserConfigured),
+        check('Admin password', !!status.adminPasswordConfigured),
+        check('Session secret', !!status.sessionSecretConfigured),
+        el('div', { class: 'security-row' },
+          el('span', { text: 'Legacy user accounts' }),
+          el('span', { class: 'sec-value', text: String(Number(status.legacyUsers) || 0) }))
+      );
+    }
+
+    // ---- Background color (kept independent: its own Save button, also picked up by the save bar) ----
+    const bgPicker = document.getElementById('siteBgPicker');
+    const bgHex = document.getElementById('siteBgHex');
+    const bgPreview = document.getElementById('siteBgPreview');
+    const bgStatus = document.getElementById('siteBgStatus');
+    function showBg(color) {
+      bgPicker.value = color;
+      bgHex.value = color;
+      const [r, g, b] = [1, 3, 5].map(i => parseInt(color.slice(i, i + 2), 16));
+      const dark = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 < 0.55;
+      bgPreview.style.background = color;
+      bgPreview.style.color = dark ? '#fff' : '#111';
+    }
+    function noteBg(message, kind) {
+      setMsg(bgStatus, message, kind);
+    }
+    function applySavedBg(color) {
+      BG.saved = color;
+      BG.value = color;
+      CONFIG.siteBg = color;
+      Object.keys(S).forEach(id => { if (!S[id].bg) syncBgControls(id); });
+      updateSaveBar();
+    }
+    showBg(BG.saved);
+    bgPicker.addEventListener('input', () => {
+      showBg(bgPicker.value);
+      BG.value = bgPicker.value;
+      noteBg('Not saved yet.');
+      settingsTouched();
+    });
+    bgHex.addEventListener('input', () => {
+      let value = bgHex.value.trim();
+      if (value && value[0] !== '#') value = '#' + value;
+      if (isHexColor(value)) {
+        showBg(value.toLowerCase());
+        BG.value = value.toLowerCase();
+        noteBg('Not saved yet.');
+        settingsTouched();
+      }
+    });
+    document.getElementById('siteBgReset').addEventListener('click', () => {
+      BG.value = isHexColor(CONFIG.defaultBg) ? CONFIG.defaultBg : '#181818';
+      showBg(BG.value);
+      noteBg('Reset to the default. Click “Save changes” to apply it.');
+      settingsTouched();
+    });
+    document.getElementById('siteBgSave').addEventListener('click', async () => {
+      const button = document.getElementById('siteBgSave');
+      button.disabled = true;
+      noteBg('Saving...');
+      try {
+        const data = await api('/api/settings', { bg_color: BG.value });
+        applySavedBg(data.bg_color || BG.value);
+        showBg(BG.saved);
+        noteBg('Saved. Every page without its own background color now uses this one.', 'ok');
+        toast('Background saved.', 'ok');
+      } catch (err) {
+        noteBg(err.message, 'err');
+        toast(err.message, 'err');
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    // ---- Save / discard: appearance → content → background, sequentially ----
+    function socialForSave() {
+      return DRAFTS.content.footer.social
+        .map(row => ({ label: String(row.label || '').trim(), url: String(row.url || '').trim() }))
+        .filter(row => row.label || row.url);
+    }
+    function validateSocial(rows) {
+      for (const row of rows) {
+        if (!row.label) return 'Every social link needs a label (for example "Instagram").';
+        if (!isHttpUrl(row.url)) return 'The social link for "' + row.label + '" must start with http:// or https://.';
+      }
+      return '';
+    }
+    async function saveSettings() {
+      const saveBtn = document.getElementById('settingsSave');
+      saveBtn.disabled = true;
+      // Clamp one last time so what is posted is exactly what the contract allows.
+      DRAFTS.appearance = sanitizeAppearance(DRAFTS.appearance);
+      DRAFTS.content = sanitizeContent(DRAFTS.content);
+      syncAppearanceControls();
+      syncContentControls();
+      let savedAnything = false;
+      try {
+        if (JSON.stringify(DRAFTS.appearance) !== JSON.stringify(SAVED.appearance)) {
+          const data = await api('/api/settings/appearance', { appearance: DRAFTS.appearance });
+          DRAFTS.appearance = sanitizeAppearance(data.appearance || DRAFTS.appearance);
+          SAVED.appearance = clone(DRAFTS.appearance);
+          syncAppearanceControls();
+          savedAnything = true;
+        }
+        if (JSON.stringify(DRAFTS.content) !== JSON.stringify(SAVED.content)) {
+          const content = clone(DRAFTS.content);
+          content.footer.social = socialForSave();
+          const problem = validateSocial(content.footer.social);
+          if (problem) throw new Error(problem);
+          const data = await api('/api/settings/content', { content });
+          DRAFTS.content = sanitizeContent(data.content || content);
+          SAVED.content = clone(DRAFTS.content);
+          syncContentControls();
+          savedAnything = true;
+        }
+        if (BG.value !== BG.saved) {
+          const data = await api('/api/settings', { bg_color: BG.value });
+          applySavedBg(data.bg_color || BG.value);
+          showBg(BG.saved);
+          noteBg('Background saved.', 'ok');
+          savedAnything = true;
+        }
+      } catch (err) {
+        updateSaveBar();
+        toast(err.message, 'err');
+        return;
+      } finally {
+        saveBtn.disabled = false;
+        updateSaveBar();
+      }
+      updateSaveBar();
+      applyPreview();
+      refreshPreview();
+      toast(savedAnything ? 'Settings saved. Your site is updated.' : 'Nothing to save yet.', savedAnything ? 'ok' : '', savedAnything ? 4000 : 2000);
+    }
+    function discardSettings() {
+      if (!hasSettingsChanges()) return;
+      if (!confirm('Discard all unsaved settings changes?')) return;
+      DRAFTS.appearance = clone(SAVED.appearance);
+      DRAFTS.content = clone(SAVED.content);
+      BG.value = BG.saved;
+      syncAppearanceControls();
+      syncContentControls();
+      showBg(BG.saved);
+      noteBg('');
+      updateSaveBar();
+      applyPreview();
+      toast('Unsaved settings changes discarded.', 'ok', 2500);
+    }
+    document.getElementById('settingsSave').addEventListener('click', saveSettings);
+    document.getElementById('settingsDiscard').addEventListener('click', discardSettings);
+
+    // ---- Initial paint from the server-provided (or default) objects ----
+    syncAppearanceControls();
+    syncContentControls();
+    renderSecurity();
+    updateSaveBar();
+    if (previewDoc() && previewFrame.contentDocument.readyState === 'complete') applyPreview();
   </script>
 </body>
 </html>

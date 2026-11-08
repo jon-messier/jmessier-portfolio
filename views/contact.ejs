@@ -1,46 +1,91 @@
+<%
+  // Locals arrive from server.js (see APPEARANCE-CONTRACT.md §3). Normalise them here so a
+  // missing setting falls back to the site's previous behaviour instead of breaking the page.
+  var appearanceData = (typeof appearance === 'object' && appearance) ? appearance : {};
+  var contentData = (typeof content === 'object' && content) ? content : {};
+  var seoData = (contentData.seo && typeof contentData.seo === 'object') ? contentData.seo : {};
+  var contactData = (contentData.contact && typeof contentData.contact === 'object') ? contentData.contact : {};
+  var siteName = (seoData.siteName && String(seoData.siteName).trim()) ? String(seoData.siteName).trim() : 'Jon Messier';
+  var pageTitle = 'Contact | ' + siteName;
+  var pageDescription = (seoData.description && String(seoData.description).trim()) ? String(seoData.description).trim().replace(/\s+/g, ' ') : '';
+  var ogImage = (seoData.ogImage && /^https?:\/\//i.test(String(seoData.ogImage))) ? String(seoData.ogImage) : '';
+  var faviconUrl = (seoData.favicon && /^https?:\/\//i.test(String(seoData.favicon))) ? String(seoData.favicon) : '';
+  var siteCss = (typeof siteCssVersion !== 'undefined' && siteCssVersion != null) ? String(siteCssVersion) : '';
+  var pageYear = (typeof currentYear !== 'undefined' && currentYear != null) ? currentYear : new Date().getFullYear();
+  var logoSrc = (typeof logoUrl !== 'undefined' && logoUrl) ? String(logoUrl) : '';
+  var activePage = (typeof active !== 'undefined' && active) ? String(active) : 'contact';
+  var bgColor = (typeof bg !== 'undefined' && bg) ? String(bg) : '#181818';
+
+  // Contact page copy comes from content.contact (Site Settings → Contact page).
+  var contactHeading = (contactData.heading && String(contactData.heading).trim()) ? String(contactData.heading).trim() : 'Contact';
+  var contactIntro = (contactData.intro && String(contactData.intro).trim()) ? String(contactData.intro).trim() : '';
+  var contactSuccess = (contactData.success && String(contactData.success).trim()) ? String(contactData.success).trim() : 'Thanks — your message has been sent.';
+  var contactEmail = (contactData.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(contactData.email).trim())) ? String(contactData.email).trim() : '';
+
+  var formValues = (typeof values === 'object' && values) ? values : {};
+  var formErrors = (typeof errors === 'object' && errors) ? errors : {};
+  var wasSent = (typeof sent !== 'undefined') ? !!sent : false;
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contact | Jon Messier</title>
+  <title><%= pageTitle %></title>
+  <% if (pageDescription) { %>
+  <meta name="description" content="<%= pageDescription %>">
+  <% } %>
+  <meta property="og:title" content="<%= pageTitle %>">
+  <% if (pageDescription) { %>
+  <meta property="og:description" content="<%= pageDescription %>">
+  <% } %>
+  <% if (ogImage) { %>
+  <meta property="og:image" content="<%= ogImage %>">
+  <% } %>
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="<%= siteName %>">
+  <% if (faviconUrl) { %>
+  <link rel="icon" href="<%= faviconUrl %>">
+  <% } %>
+  <link rel="stylesheet" href="/site.css?v=<%= siteCss %>">
   <link rel="stylesheet" href="/style.css">
-  <link rel="stylesheet" href="/theme.css?bg=<%= encodeURIComponent(bg) %>">
+  <link rel="stylesheet" href="/theme.css?bg=<%= encodeURIComponent(bgColor) %>">
 </head>
 <body id="top">
-  <%- include('partials/header', { logoUrl, active }) %>
+  <%- include('partials/header', { logoUrl: logoSrc, active: activePage, appearance: appearanceData }) %>
   <main class="contact-page">
     <div class="project-header">
-      <h1>Contact</h1>
-      <p class="project-description">Have a project in mind or a question? Send a message and I'll get back to you.</p>
+      <h1><%= contactHeading %></h1>
+      <% if (contactIntro) { %><p class="project-description"><%= contactIntro %></p><% } %>
+      <% if (contactEmail) { %><p class="contact-email">Or email <a href="mailto:<%= contactEmail %>"><%= contactEmail %></a></p><% } %>
     </div>
 
-    <% if (sent) { %>
+    <% if (wasSent) { %>
       <div class="contact-sent">
-        <h2>Thanks! Your message was sent.</h2>
+        <h2><%= contactSuccess %></h2>
         <p>I'll reply to the email address you provided.</p>
         <a href="/" class="back-to-top">Back to Portfolio</a>
       </div>
     <% } else { %>
       <form method="POST" action="/contact" class="contact-form" id="contactForm" novalidate>
-        <% if (errors.form) { %><p class="form-error"><%= errors.form %></p><% } %>
+        <% if (formErrors.form) { %><p class="form-error"><%= formErrors.form %></p><% } %>
 
-        <div class="field <%= errors.name ? 'has-error' : '' %>">
+        <div class="field <%= formErrors.name ? 'has-error' : '' %>">
           <label for="name">Name <span class="req">Required</span></label>
-          <input type="text" id="name" name="name" maxlength="100" autocomplete="name" required value="<%= values.name || '' %>">
-          <% if (errors.name) { %><p class="field-error"><%= errors.name %></p><% } %>
+          <input type="text" id="name" name="name" maxlength="100" autocomplete="name" required value="<%= formValues.name || '' %>">
+          <% if (formErrors.name) { %><p class="field-error"><%= formErrors.name %></p><% } %>
         </div>
 
-        <div class="field <%= errors.email ? 'has-error' : '' %>">
+        <div class="field <%= formErrors.email ? 'has-error' : '' %>">
           <label for="email">Email Address <span class="req">Required</span></label>
-          <input type="email" id="email" name="email" maxlength="200" autocomplete="email" required value="<%= values.email || '' %>">
-          <% if (errors.email) { %><p class="field-error"><%= errors.email %></p><% } %>
+          <input type="email" id="email" name="email" maxlength="200" autocomplete="email" required value="<%= formValues.email || '' %>">
+          <% if (formErrors.email) { %><p class="field-error"><%= formErrors.email %></p><% } %>
         </div>
 
-        <div class="field <%= errors.message ? 'has-error' : '' %>">
+        <div class="field <%= formErrors.message ? 'has-error' : '' %>">
           <label for="message">Message <span class="req">Required</span></label>
-          <textarea id="message" name="message" rows="7" maxlength="5000" required><%= values.message || '' %></textarea>
-          <% if (errors.message) { %><p class="field-error"><%= errors.message %></p><% } %>
+          <textarea id="message" name="message" rows="7" maxlength="5000" required><%= formValues.message || '' %></textarea>
+          <% if (formErrors.message) { %><p class="field-error"><%= formErrors.message %></p><% } %>
         </div>
 
         <!-- Spam trap: hidden from people, bots tend to fill it in -->
@@ -80,5 +125,6 @@
       update();
     })();
   </script>
+  <%- include('partials/footer', { content: contentData, currentYear: pageYear, logoUrl: logoSrc }) %>
 </body>
 </html>
