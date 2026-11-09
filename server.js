@@ -8,7 +8,7 @@ const bcrypt = require('bcrypt');
 const path = require('path');
 const crypto = require('crypto');
 // Global look & feel (CSS tokens) and site copy (contact/footer/SEO), stored in `settings`.
-const { sanitizeAppearance, generateSiteCss, siteCssVersion } = require('./lib/appearance');
+const { sanitizeAppearance, generateSiteCss, siteCssVersion, tintSvg } = require('./lib/appearance');
 const { sanitizeContent } = require('./lib/content');
 
 const app = express();
@@ -182,13 +182,37 @@ const parseSettingJson = (value) => {
   try { return JSON.parse(value); } catch (err) { return null; }
 };
 
+// Logo/favicon tinting is only attempted for SVG files uploaded to the R2 bucket.
+const isSvgUrl = (url) => {
+  try { return /\.svg$/i.test(new URL(String(url)).pathname); } catch (err) { return false; }
+};
+const tintableUrl = (url) => {
+  const base = String(process.env.R2_PUBLIC_URL || '').replace(/\/+$/, '');
+  return !!base && typeof url === 'string' && url.startsWith(base + '/');
+};
+const tintedBrandUrl = (source, color, kind) => {
+  if (!source) return '';
+  if (!isColor(color) || !isSvgUrl(source) || !tintableUrl(source)) return source;
+  const v = crypto.createHash('sha1').update(source).digest('hex').slice(0, 8);
+  return `/brand/${kind}.svg?color=${encodeURIComponent(color)}&v=${v}`;
+};
+
 // Values every public page needs: branding, background, generated appearance tokens and site copy.
 const getSite = async () => {
   const s = await getSettings();
   const appearance = sanitizeAppearance(parseSettingJson(s.appearance));
   const content = sanitizeContent(parseSettingJson(s.content));
+  const rawLogo = s.logo_url || '';
+  const rawFavicon = content.seo.favicon || '';
   return {
-    logoUrl: s.logo_url || '',
+    logoUrl: tintedBrandUrl(rawLogo, appearance.colors.logo, 'logo'),
+    faviconUrl: tintedBrandUrl(rawFavicon, appearance.colors.favicon, 'favicon'),
+    branding: {
+      logoUrl: rawLogo,
+      faviconUrl: rawFavicon,
+      logoIsSvg: isSvgUrl(rawLogo),
+      faviconIsSvg: isSvgUrl(rawFavicon)
+    },
     siteBg: isColor(s.bg_color) ? s.bg_color : DEFAULT_BG,
     appearance,
     content,
@@ -296,6 +320,38 @@ app.get('/site.css', async (req, res) => {
   }
 });
 
+// Recoloured copies of the uploaded SVG logo/favicon. Falls back to the original file when the
+// source is not an SVG, the colour is missing, or anything goes wrong.
+app.get(['/brand/logo.svg', '/brand/favicon.svg'], async (req, res) => {
+  const kind = req.path.indexOf('favicon') !== -1 ? 'favicon' : 'logo';
+  let source = '';
+  try {
+    const s = await getSettings();
+    const content = sanitizeContent(parseSettingJson(s.content));
+    source = kind === 'logo' ? (s.logo_url || '') : (content.seo.favicon || '');
+    const color = isColor(req.query.color) ? String(req.query.color).toLowerCase() : '';
+    if (!source) return res.status(404).send('No ' + kind + ' uploaded.');
+    if (!color || !isSvgUrl(source) || !tintableUrl(source)) return res.redirect(302, source);
+
+    const upstream = await fetch(source, { signal: AbortSignal.timeout(5000) });
+    if (!upstream.ok) return res.redirect(302, source);
+    const contentType = upstream.headers.get('content-type') || '';
+    if (contentType && !/svg/i.test(contentType)) return res.redirect(302, source);
+    const svg = await upstream.text();
+    if (svg.length > 1024 * 1024) return res.status(413).send('SVG file is too large.');
+
+    res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'");
+    res.send(tintSvg(svg, color));
+  } catch (err) {
+    console.error('Brand tint error:', err.message);
+    if (source) return res.redirect(302, source);
+    res.status(500).send('Could not load the brand image.');
+  }
+});
+
 // ---------------------------------------------------------------------------
 // 6. Uploads straight to Cloudflare R2 (images never pass through Vercel)
 // ---------------------------------------------------------------------------
@@ -319,14 +375,28 @@ app.post('/api/upload', requireLoginApi, async (req, res) => {
 // ---------------------------------------------------------------------------
 // 7. Public pages
 // ---------------------------------------------------------------------------
+// The About page is the site's front door.
 app.get('/', async (req, res) => {
+  try {
+    const site = await getSite();
+    res.render('about', Object.assign({}, site, { bg: site.siteBg, active: 'about' }));
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error loading the about page.");
+  }
+});
+
+app.get('/about', (req, res) => res.redirect(302, '/'));
+
+// The project grid moved from / to /portfolio.
+app.get('/portfolio', async (req, res) => {
   try {
     const result = await db.execute(`SELECT id, title, slug, cover_image FROM projects WHERE hidden = 0 ${ORDER}`);
     const site = await getSite();
     res.render('index', Object.assign({}, site, { projects: toObjects(result), bg: site.siteBg, active: 'portfolio' }));
   } catch (err) {
     console.error(err);
-    res.status(500).send("Error loading homepage.");
+    res.status(500).send("Error loading the portfolio.");
   }
 });
 
@@ -532,6 +602,7 @@ app.get('/admin', requireLoginPage, async (req, res) => {
       logoUrl: site.logoUrl, siteBg: site.siteBg, defaultBg: DEFAULT_BG,
       pageWidths: PAGE_WIDTHS, blockGaps: BLOCK_GAPS,
       appearance: site.appearance, content: site.content,
+      branding: site.branding,
       securityStatus: {
         adminUserConfigured: !!creds.username,
         adminPasswordConfigured: !!(creds.password || creds.hash),

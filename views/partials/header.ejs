@@ -6,12 +6,19 @@
   var headerLayout = headerConfig.layout === 'logo-left' ? 'logo-left' : 'nav-left';
   var headerLogo = (typeof logoUrl !== 'undefined' && logoUrl) ? String(logoUrl) : '';
   var headerActive = (typeof active !== 'undefined' && active) ? String(active) : '';
+  // V2 site structure: About is the root page, the work grid lives at /portfolio.
+  var headerLinks = [
+    { key: 'about', label: 'About', href: '/' },
+    { key: 'portfolio', label: 'Portfolio', href: '/portfolio' },
+    { key: 'contact', label: 'Contact', href: '/contact' }
+  ];
 %>
 <header data-layout="<%= headerLayout %>">
   <nav id="main-nav">
     <ul>
-      <li><a href="/" class="<%= headerActive === 'portfolio' ? 'active' : '' %>"<% if (headerActive === 'portfolio') { %> aria-current="page"<% } %>>Portfolio</a></li>
-      <li><a href="/contact" class="<%= headerActive === 'contact' ? 'active' : '' %>"<% if (headerActive === 'contact') { %> aria-current="page"<% } %>>Contact</a></li>
+      <% headerLinks.forEach(function (link) { %>
+        <li><a href="<%= link.href %>" class="<%= headerActive === link.key ? 'active' : '' %>"<% if (headerActive === link.key) { %> aria-current="page"<% } %>><%= link.label %></a></li>
+      <% }); %>
     </ul>
   </nav>
   <a href="/" class="logo" aria-label="Jon Messier home">

@@ -9,7 +9,8 @@
   var pageTitle = 'Contact | ' + siteName;
   var pageDescription = (seoData.description && String(seoData.description).trim()) ? String(seoData.description).trim().replace(/\s+/g, ' ') : '';
   var ogImage = (seoData.ogImage && /^https?:\/\//i.test(String(seoData.ogImage))) ? String(seoData.ogImage) : '';
-  var faviconUrl = (seoData.favicon && /^https?:\/\//i.test(String(seoData.favicon))) ? String(seoData.favicon) : '';
+  // Server-supplied, already-tinted favicon (V2 §4). Never rebuilt from content.seo.favicon here.
+  var faviconHref = (typeof faviconUrl !== 'undefined' && faviconUrl && /^(https?:\/\/|\/)/i.test(String(faviconUrl))) ? String(faviconUrl) : '';
   var siteCss = (typeof siteCssVersion !== 'undefined' && siteCssVersion != null) ? String(siteCssVersion) : '';
   var pageYear = (typeof currentYear !== 'undefined' && currentYear != null) ? currentYear : new Date().getFullYear();
   var logoSrc = (typeof logoUrl !== 'undefined' && logoUrl) ? String(logoUrl) : '';
@@ -44,8 +45,8 @@
   <% } %>
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="<%= siteName %>">
-  <% if (faviconUrl) { %>
-  <link rel="icon" href="<%= faviconUrl %>">
+  <% if (faviconHref) { %>
+  <link rel="icon" href="<%= faviconHref %>">
   <% } %>
   <link rel="stylesheet" href="/site.css?v=<%= siteCss %>">
   <link rel="stylesheet" href="/style.css">

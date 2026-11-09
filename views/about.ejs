@@ -1,0 +1,153 @@
+<%
+  // V2 About page (site root). Locals come from server.js per V2-CONTRACT.md §4.
+  // Everything is normalised/fallback-guarded so the page still works if a local is missing.
+  var appearanceData = (typeof appearance === 'object' && appearance) ? appearance : {};
+  var contentData = (typeof content === 'object' && content) ? content : {};
+  var seoData = (contentData.seo && typeof contentData.seo === 'object') ? contentData.seo : {};
+  var aboutData = (contentData.about && typeof contentData.about === 'object') ? contentData.about : {};
+  var hasAbout = !!(contentData.about && typeof contentData.about === 'object');
+
+  var siteName = (seoData.siteName && String(seoData.siteName).trim()) ? String(seoData.siteName).trim() : 'Jon Messier';
+  var homeTitle = (seoData.homeTitle && String(seoData.homeTitle).trim()) ? String(seoData.homeTitle).trim() : siteName;
+  var pageDescription = (seoData.description && String(seoData.description).trim()) ? String(seoData.description).trim().replace(/\s+/g, ' ') : '';
+  var ogImage = (seoData.ogImage && /^https?:\/\//i.test(String(seoData.ogImage))) ? String(seoData.ogImage) : '';
+  var siteCss = (typeof siteCssVersion !== 'undefined' && siteCssVersion != null) ? String(siteCssVersion) : '';
+  var pageYear = (typeof currentYear !== 'undefined' && currentYear != null) ? currentYear : new Date().getFullYear();
+  var logoSrc = (typeof logoUrl !== 'undefined' && logoUrl) ? String(logoUrl) : '';
+  var activePage = (typeof active !== 'undefined' && active) ? String(active) : 'about';
+  var bgColor = (typeof bg !== 'undefined' && bg) ? String(bg) : '#181818';
+  // Server-supplied, already-tinted favicon (V2 §4). Never rebuilt from content.seo.favicon here.
+  var faviconHref = (typeof faviconUrl !== 'undefined' && faviconUrl && /^(https?:\/\/|\/)/i.test(String(faviconUrl))) ? String(faviconUrl) : '';
+
+  // About copy: server values first. When the whole about group is missing (e.g. an older server),
+  // fall back to the contract defaults so the page is still complete.
+  var aboutEyebrow = hasAbout ? String(aboutData.eyebrow || '').trim() : 'About me';
+  var aboutHeadline = hasAbout ? String(aboutData.headline || '').trim() : "I'm Jon Messier.";
+  var aboutSubhead = hasAbout ? String(aboutData.subhead || '').trim() : 'But I am also...';
+  var aboutRoles = (hasAbout ? String(aboutData.roles || '') : 'A visual storyteller.\nA restless learner.\nA curious generalist.')
+    .split(/\r?\n/).map(function (role) { return role.trim(); }).filter(Boolean).slice(0, 6);
+  var aboutIntro = hasAbout ? String(aboutData.intro || '').trim() : "I'm a multidisciplinary designer focused on visual storytelling, typography, and design that connects with people.";
+  var aboutQuote = hasAbout ? String(aboutData.quote || '').trim() : "For me, a project reaches perfection not when there's nothing left to add, but when there's nothing left to take away.";
+  var aboutQuoteText = hasAbout ? String(aboutData.quoteText || '').trim() : 'Good design should feel effortless, refined down to the essentials, yet strong enough to resonate and endure.';
+  var aboutButtonText = hasAbout ? String(aboutData.buttonText || '').trim() : "Let's get in touch!";
+  var aboutButtonUrl = hasAbout ? String(aboutData.buttonUrl || '').trim() : '/contact';
+
+  // Rendering rules (§3): hide intro/quote/CTA when empty; empty headshot gets a monogram panel.
+  var headshotUrl = (aboutData.headshot && /^https?:\/\//i.test(String(aboutData.headshot))) ? String(aboutData.headshot) : '';
+  var introParagraphs = aboutIntro.split(/\n\s*\n/).map(function (paragraph) { return paragraph.trim(); }).filter(Boolean);
+  // Only trust internal paths (single leading /) or http(s) URLs for the CTA.
+  var ctaHref = /^https?:\/\/[^\s]+$/i.test(aboutButtonUrl) ? aboutButtonUrl : (/^\/(?!\/)/.test(aboutButtonUrl) ? aboutButtonUrl : '');
+  var ctaExternal = /^https?:\/\//i.test(ctaHref);
+  var monogram = (function (name) {
+    var words = String(name).trim().split(/\s+/).filter(Boolean);
+    var letters = words.slice(0, 2).map(function (word) { return word.charAt(0).toUpperCase(); }).join('');
+    return letters || 'JM';
+  })(siteName);
+%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= homeTitle %></title>
+  <% if (pageDescription) { %>
+  <meta name="description" content="<%= pageDescription %>">
+  <% } %>
+  <meta property="og:title" content="<%= homeTitle %>">
+  <% if (pageDescription) { %>
+  <meta property="og:description" content="<%= pageDescription %>">
+  <% } %>
+  <% if (ogImage) { %>
+  <meta property="og:image" content="<%= ogImage %>">
+  <% } %>
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="<%= siteName %>">
+  <% if (faviconHref) { %>
+  <link rel="icon" href="<%= faviconHref %>">
+  <% } %>
+  <link rel="stylesheet" href="/site.css?v=<%= siteCss %>">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/theme.css?bg=<%= encodeURIComponent(bgColor) %>">
+</head>
+<body id="top">
+  <%- include('partials/header', { logoUrl: logoSrc, active: activePage, appearance: appearanceData }) %>
+  <main class="about-page">
+    <section class="about-hero">
+      <div class="about-container about-hero-grid">
+        <div class="about-hero-text">
+          <% if (aboutEyebrow) { %><p class="about-eyebrow"><%= aboutEyebrow %></p><% } %>
+          <% if (aboutHeadline) { %><h1 class="about-headline"><%= aboutHeadline %></h1><% } %>
+          <% if (aboutSubhead) { %><p class="about-subhead"><%= aboutSubhead %></p><% } %>
+          <% if (aboutRoles.length) { %>
+            <p class="about-roles"><span class="about-role" id="about-role"><%= aboutRoles[0] %></span></p>
+            <%# Roles are repeated in data attributes so the rotation JS never has to parse a JSON blob. %>
+            <div class="about-roles-data" hidden aria-hidden="true">
+              <% aboutRoles.forEach(function (role) { %><span data-role="<%= role %>"></span><% }); %>
+            </div>
+          <% } %>
+        </div>
+        <figure class="about-photo">
+          <div class="about-photo-frame">
+            <% if (headshotUrl) { %>
+              <img src="<%= headshotUrl %>" alt="Portrait of <%= siteName %>" loading="eager">
+            <% } else { %>
+              <div class="about-monogram" aria-hidden="true"><span><%= monogram %></span></div>
+            <% } %>
+          </div>
+        </figure>
+      </div>
+    </section>
+
+    <% if (introParagraphs.length) { %>
+    <section class="about-section about-intro">
+      <div class="about-container about-intro-copy">
+        <% introParagraphs.forEach(function (paragraph) { %><p><%= paragraph %></p><% }); %>
+      </div>
+    </section>
+    <% } %>
+
+    <% if (aboutQuote) { %>
+    <section class="about-section about-quote">
+      <div class="about-container">
+        <blockquote class="about-quote-block">
+          <p class="about-quote-text"><%= aboutQuote %></p>
+        </blockquote>
+        <% if (aboutQuoteText) { %><p class="about-quote-support"><%= aboutQuoteText %></p><% } %>
+      </div>
+    </section>
+    <% } %>
+
+    <% if (aboutButtonText && ctaHref) { %>
+    <section class="about-section about-cta">
+      <div class="about-container">
+        <a class="about-cta-button" href="<%= ctaHref %>"<% if (ctaExternal) { %> target="_blank" rel="noopener noreferrer"<% } %>><%= aboutButtonText %></a>
+      </div>
+    </section>
+    <% } %>
+  </main>
+  <%- include('partials/footer', { content: contentData, currentYear: pageYear, logoUrl: logoSrc }) %>
+  <script>
+    // Rotate the "I am also..." roles line. Static when there are fewer than two roles, and
+    // disabled entirely for visitors who prefer reduced motion. Layout height is reserved in CSS.
+    (function () {
+      var roleEl = document.getElementById('about-role');
+      var dataEl = document.querySelector('.about-roles-data');
+      if (!roleEl || !dataEl) return;
+      var roles = Array.prototype.map.call(dataEl.querySelectorAll('[data-role]'), function (item) {
+        return item.getAttribute('data-role');
+      }).filter(Boolean);
+      if (roles.length < 2) return;
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      var index = 0;
+      window.setInterval(function () {
+        index = (index + 1) % roles.length;
+        roleEl.classList.add('is-changing');
+        window.setTimeout(function () {
+          roleEl.textContent = roles[index];
+          roleEl.classList.remove('is-changing');
+        }, 240);
+      }, 3500);
+    })();
+  </script>
+</body>
+</html>

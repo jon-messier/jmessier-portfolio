@@ -208,6 +208,43 @@
     .sec-bad { color: #ff6b76; font-weight: 700; }
     .sec-value { color: #ddd; }
 
+    /* Color picker (Photoshop-style): native color inputs are hidden and replaced by a swatch */
+    .cp-native { position: absolute !important; width: 1px !important; height: 1px !important; opacity: 0 !important; pointer-events: none !important; }
+    .cp-attach { display: inline-flex; align-items: center; gap: 0.5rem; }
+    .cp-swatch { width: 44px; height: 34px; padding: 0; border: 1px solid #555; border-radius: 4px; cursor: pointer; background: #000; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35); }
+    .cp-swatch:hover { border-color: #8fa2ff; }
+    .cp-swatch:disabled, .cp-swatch.cp-disabled { opacity: 0.35; cursor: not-allowed; }
+    .cp-hexlabel { font-family: monospace; font-size: 0.8rem; color: #bbb; }
+
+    .cp-pop { position: fixed; z-index: 2000; width: 258px; padding: 0.7rem; background: #1b1b1b; border: 1px solid #444; border-radius: 8px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6); color: #ddd; font-family: 'Open Sans', sans-serif; font-size: 0.8rem; user-select: none; outline: none; }
+    .cp-pop-head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; margin-bottom: 0.5rem; font-weight: 600; color: #fff; }
+    .cp-pop-head code { color: #9fb0ff; font-size: 0.75rem; font-family: monospace; }
+    .cp-body { display: flex; gap: 0.6rem; }
+    .cp-sv { position: relative; flex: 1; height: 150px; border-radius: 4px; cursor: crosshair; touch-action: none; }
+    .cp-sv-white, .cp-sv-black { position: absolute; inset: 0; pointer-events: none; border-radius: 4px; }
+    .cp-sv-white { background: linear-gradient(to right, #fff, rgba(255, 255, 255, 0)); }
+    .cp-sv-black { background: linear-gradient(to top, #000, rgba(0, 0, 0, 0)); }
+    .cp-sv-handle { position: absolute; width: 12px; height: 12px; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.7); transform: translate(-50%, -50%); pointer-events: none; }
+    .cp-hue { position: relative; width: 16px; height: 150px; border-radius: 8px; cursor: ns-resize; touch-action: none; background: linear-gradient(to bottom, #ff0000, #ffff00 16.66%, #00ff00 33.33%, #00ffff 50%, #0000ff 66.66%, #ff00ff 83.33%, #ff0000); }
+    .cp-hue-handle { position: absolute; left: -3px; right: -3px; height: 6px; border: 2px solid #fff; border-radius: 4px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.7); transform: translateY(-50%); pointer-events: none; }
+    .cp-swatches { display: flex; gap: 0.6rem; margin: 0.6rem 0; }
+    .cp-swatch-box { flex: 1; }
+    .cp-swatch-box span { display: block; margin-bottom: 2px; font-size: 0.65rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+    .cp-swatch-color { height: 24px; border: 1px solid #444; border-radius: 4px; cursor: pointer; }
+    .cp-fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin-bottom: 0.45rem; }
+    .cp-fields label, .cp-hex-row label { display: block; margin-bottom: 2px; font-size: 0.65rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; }
+    .cp-fields input, .cp-hex-row input { width: 100%; padding: 4px 5px; background: #111; border: 1px solid #444; color: #fff; border-radius: 3px; font-family: monospace; font-size: 0.8rem; }
+    .cp-hex-row { display: flex; align-items: center; gap: 0.45rem; margin-bottom: 0.6rem; }
+    .cp-hex-row label { margin: 0; white-space: nowrap; }
+    .cp-actions { display: flex; justify-content: flex-end; gap: 0.4rem; }
+    .cp-actions .mini.ok { background: #4361ee; border-color: #4361ee; color: #fff; }
+
+    /* Colors card tint rows */
+    .tint-grid { display: grid; gap: 0.8rem; }
+    .tint-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    .tint-row .hint { flex: 1 1 220px; margin: 0; }
+    .upload-thumb.portrait { width: 84px; height: 104px; }
+
     @media (max-width: 700px) {
       body { padding: 1rem; }
       .settings-row { grid-template-columns: 1fr; }
@@ -266,7 +303,7 @@
         <h2>Existing Projects</h2>
         <span class="status-msg" id="orderStatus" style="margin:0;"></span>
       </div>
-      <p class="hint" style="margin-top:-0.5rem;">Drag ⠿ or use the arrows to set the order projects appear on your homepage. Hidden projects stay here but don't appear on the live site.</p>
+      <p class="hint" style="margin-top:-0.5rem;">Drag ⠿ or use the arrows to set the order projects appear on your Portfolio page. Hidden projects stay here but don't appear on the live site.</p>
 
       <div class="list-filters">
         <input type="search" id="projectSearch" placeholder="Search by title or project link…" aria-label="Search projects">
@@ -310,7 +347,7 @@
 
             <div class="form-group">
               <label>Cover Image</label>
-              <p class="hint">Shown on the homepage. Click ★ on any image below to use it, or upload a different one.</p>
+              <p class="hint">Shown on the Portfolio page. Click ★ on any image below to use it, or upload a different one.</p>
               <div class="cover-row">
                 <img class="f-cover-preview" alt="">
                 <button type="button" class="mini f-cover-upload">Upload a different cover…</button>
@@ -401,6 +438,7 @@
         <div style="margin-top:1.25rem; padding-top:1.25rem; border-top:1px solid #333;">
           <h3 style="font-size:0.95rem;">Site logo</h3>
           <p class="hint">A new logo saves immediately, separately from the other settings on this tab.</p>
+          <% const adminLogoUrl = (locals.branding && locals.branding.logoUrl) || locals.logoUrl || ''; %>
           <div class="form-group" style="display:flex; align-items:center; gap:2rem; margin:0;">
             <div style="flex:1;">
               <label for="logoInput">Site Logo (SVG/PNG)</label>
@@ -409,15 +447,15 @@
             </div>
             <div style="background:#000; padding:1rem; border-radius:8px; min-width:150px; text-align:center;">
               <span style="font-size:0.8rem; color:#aaa; display:block; margin-bottom:0.5rem;">Current:</span>
-              <% if (logoUrl) { %><img src="<%= logoUrl %>" alt="Current logo" class="current-logo"><% } else { %><span style="font-size:1.5rem; font-weight:700;">JM</span><% } %>
+              <% if (adminLogoUrl) { %><img src="<%= adminLogoUrl %>" alt="Current logo" class="current-logo"><% } else { %><span style="font-size:1.5rem; font-weight:700;">JM</span><% } %>
             </div>
           </div>
         </div>
       </div>
 
       <div class="card">
-        <h2>Homepage grid</h2>
-        <p class="hint">How the project grid looks on your homepage.</p>
+        <h2>Portfolio grid</h2>
+        <p class="hint">How the project grid looks on your Portfolio page.</p>
         <div class="field-grid">
           <div class="field">
             <label for="setHomeColumns">Columns (desktop)</label>
@@ -430,11 +468,12 @@
           <div class="field">
             <label for="setHomeMax">Page width</label>
             <select id="setHomeMax" data-draft="appearance" data-path="home.maxWidth" data-kind="number">
+              <option value="-1">80% of screen (new default)</option>
+              <option value="0">Full width</option>
               <option value="860">Narrow (860px)</option>
               <option value="1100">Standard (1100px)</option>
               <option value="1300">Wide (1300px)</option>
               <option value="1500">Extra-wide (1500px)</option>
-              <option value="0">Full width</option>
             </select>
           </div>
           <div class="field">
@@ -475,14 +514,14 @@
             </select>
           </div>
         </div>
-        <label class="inline-check check-row"><input type="checkbox" id="setHomeShowTitles" data-draft="appearance" data-path="home.showTitles" data-kind="bool"> Show project titles on the homepage</label>
+        <label class="inline-check check-row"><input type="checkbox" id="setHomeShowTitles" data-draft="appearance" data-path="home.showTitles" data-kind="bool"> Show project titles on the portfolio page</label>
       </div>
 
       <div class="card">
         <div class="card-head">
           <div>
             <h2>Live preview</h2>
-            <p class="hint" style="margin:0;">Your homepage with the unsaved settings above applied. Nothing is saved from this preview.</p>
+            <p class="hint" style="margin:0;">Your Portfolio page with the unsaved settings above applied. Nothing is saved from this preview.</p>
           </div>
           <div class="preview-actions">
             <button type="button" class="mini active" data-preview-width="desktop">Desktop</button>
@@ -492,7 +531,7 @@
         </div>
         <div class="preview-shell">
           <div class="preview-frame-wrap desktop" id="previewWrap">
-            <iframe id="livePreview" src="/" title="Homepage preview"></iframe>
+            <iframe id="livePreview" src="/portfolio" title="Portfolio preview"></iframe>
           </div>
         </div>
       </div>
@@ -583,6 +622,35 @@
       </div>
 
       <div class="card">
+        <h2>Colors</h2>
+        <p class="hint">Accent colors used across the site. Click a swatch to open the color picker.</p>
+        <div class="field-grid">
+          <div class="field">
+            <label for="setColorNavActive">Nav active color</label>
+            <input type="color" id="setColorNavActive" data-draft="appearance" data-path="colors.navActive">
+            <p class="hint">The current page link in the header turns this color.</p>
+          </div>
+          <div class="field">
+            <label for="setColorTitleHover">Project title hover color</label>
+            <input type="color" id="setColorTitleHover" data-draft="appearance" data-path="colors.titleHover">
+            <p class="hint">Project titles on the Portfolio grid turn this color on hover.</p>
+          </div>
+        </div>
+        <div class="tint-grid">
+          <div class="tint-row">
+            <label class="inline-check"><input type="checkbox" id="tintLogo"> Tint the logo</label>
+            <input type="color" id="setColorLogo" data-draft="appearance" data-path="colors.logo">
+            <span class="hint" id="logoTintHint"></span>
+          </div>
+          <div class="tint-row">
+            <label class="inline-check"><input type="checkbox" id="tintFavicon"> Tint the favicon</label>
+            <input type="color" id="setColorFavicon" data-draft="appearance" data-path="colors.favicon">
+            <span class="hint" id="faviconTintHint"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
         <h2>Background Color</h2>
         <p class="hint">Used on every page of your site. Projects with their own background color keep theirs. Text and the logo switch between light and dark automatically so they stay readable. This card also saves on its own, and the main “Save changes” button picks up any change you make here.</p>
         <div class="bg-settings">
@@ -618,6 +686,70 @@
           <label for="setContactSuccess">Success message (after a message is sent)</label>
           <textarea id="setContactSuccess" rows="2" data-draft="content" data-path="contact.success"></textarea>
         </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>About page</h2>
+            <p class="hint" style="margin:0;">The content of your About page, which is the site root (/).</p>
+          </div>
+          <a class="mini" href="/" target="_blank" rel="noopener">Preview about page ↗</a>
+        </div>
+        <div class="field-grid">
+          <div class="field">
+            <label for="setAboutEyebrow">Eyebrow</label>
+            <input type="text" id="setAboutEyebrow" placeholder="About me" data-draft="content" data-path="about.eyebrow">
+          </div>
+          <div class="field">
+            <label for="setAboutHeadline">Headline</label>
+            <input type="text" id="setAboutHeadline" placeholder="I'm Jon Messier." data-draft="content" data-path="about.headline">
+          </div>
+          <div class="field">
+            <label for="setAboutSubhead">Subhead</label>
+            <input type="text" id="setAboutSubhead" placeholder="But I am also..." data-draft="content" data-path="about.subhead">
+          </div>
+        </div>
+        <div class="field">
+          <label for="setAboutRoles">Rotating roles (one per line, up to 6)</label>
+          <textarea id="setAboutRoles" rows="4" placeholder="A visual storyteller.&#10;A restless learner.&#10;A curious generalist." data-draft="content" data-path="about.roles"></textarea>
+          <p class="hint">Each line becomes a role that rotates on the page.</p>
+        </div>
+        <div class="field">
+          <label for="setAboutIntro">Intro</label>
+          <textarea id="setAboutIntro" rows="4" placeholder="A short intro about you. Leave empty to hide this section." data-draft="content" data-path="about.intro"></textarea>
+        </div>
+        <div class="field-grid">
+          <div class="field">
+            <label for="setAboutQuote">Quote</label>
+            <textarea id="setAboutQuote" rows="3" placeholder="A large pull quote. Leave empty to hide it." data-draft="content" data-path="about.quote"></textarea>
+          </div>
+          <div class="field">
+            <label for="setAboutQuoteText">Quote support text</label>
+            <textarea id="setAboutQuoteText" rows="3" placeholder="A sentence supporting the quote." data-draft="content" data-path="about.quoteText"></textarea>
+          </div>
+        </div>
+        <div class="field">
+          <label>Headshot</label>
+          <div class="upload-row">
+            <div class="upload-thumb portrait" id="aboutHeadshotPreview"><span>None</span></div>
+            <div>
+              <button type="button" class="mini" id="aboutHeadshotUpload">Upload headshot…</button>
+              <p class="hint" id="aboutHeadshotStatus">Uploaded as-is. Empty shows a monogram fallback on the page.</p>
+            </div>
+          </div>
+        </div>
+        <div class="field-grid">
+          <div class="field">
+            <label for="setAboutButtonText">Button text</label>
+            <input type="text" id="setAboutButtonText" placeholder="Let's get in touch!" data-draft="content" data-path="about.buttonText">
+          </div>
+          <div class="field">
+            <label for="setAboutButtonUrl">Button URL</label>
+            <input type="text" id="setAboutButtonUrl" placeholder="/contact" data-draft="content" data-path="about.buttonUrl">
+          </div>
+        </div>
+        <p class="hint">The button is hidden when its text or URL is empty. The URL must start with <code>/</code> or <code>http(s)://</code>.</p>
       </div>
 
       <div class="card">
@@ -696,7 +828,7 @@
 
   <div class="toast-stack" id="toasts" aria-live="polite"></div>
 
-  <script id="admin-data" type="application/json"><%- JSON.stringify({ projects: projects, messages: messages, appearance: locals.appearance || null, content: locals.content || null, securityStatus: locals.securityStatus || null, config: locals.config || { siteBg: locals.siteBg || locals.bg || '#181818', defaultBg: locals.defaultBg || '#181818', pageWidths: locals.pageWidths, blockGaps: locals.blockGaps } }).replace(/</g, '\\u003c') %></script>
+  <script id="admin-data" type="application/json"><%- JSON.stringify({ projects: projects, messages: messages, appearance: locals.appearance || null, content: locals.content || null, securityStatus: locals.securityStatus || null, branding: locals.branding || null, logoUrl: locals.logoUrl || '', config: locals.config || { siteBg: locals.siteBg || locals.bg || '#181818', defaultBg: locals.defaultBg || '#181818', pageWidths: locals.pageWidths, blockGaps: locals.blockGaps } }).replace(/</g, '\\u003c') %></script>
   <script>
     const DATA = JSON.parse(document.getElementById('admin-data').textContent);
     const CONFIG = Object.assign({ siteBg: '#181818', defaultBg: '#181818', pageWidths: [640, 860, 1100, 1400], blockGaps: [0, 1, 2, 4] }, DATA.config || {});
@@ -751,6 +883,249 @@
       node.addEventListener('click', () => dismissToast(node));
       toastStack.append(node);
       setTimeout(() => dismissToast(node), ms || (kind === 'err' ? 7000 : 4000));
+    }
+
+    // ======================================================================
+    // Reusable Photoshop-style HSB color picker
+    // Attaches to a native <input type="color">: the native control is hidden and
+    // replaced by a swatch + hex label. Clicking the swatch opens a popover with an
+    // SV square, a vertical hue slider, new/current swatches, H/S/B fields and a
+    // pasteable hex field. While open the value updates live: input.value is set and
+    // a bubbling "input" event is dispatched, so the existing draft/background
+    // handlers fire. Cancel restores the value from when the popover opened.
+    // ======================================================================
+    const CP_HEX = /^#[0-9a-fA-F]{6}$/;
+    const cpClamp = (n, min, max) => Math.min(max, Math.max(min, n));
+    const cpNumber = (value, fallback) => { const n = Number(value); return Number.isFinite(n) ? n : fallback; };
+    function cpHexToRgb(value) {
+      const hex = typeof value === 'string' ? value.trim() : '';
+      if (/^#[0-9a-fA-F]{3}$/.test(hex)) return [1, 2, 3].map(i => parseInt(hex[i] + hex[i], 16));
+      if (!CP_HEX.test(hex)) return null;
+      return [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+    }
+    function cpRgbToHex(rgb) {
+      return '#' + rgb.map(v => cpClamp(Math.round(v), 0, 255).toString(16).padStart(2, '0')).join('');
+    }
+    function cpRgbToHsb(rgb) {
+      const [r, g, b] = rgb.map(v => v / 255);
+      const max = Math.max(r, g, b), min = Math.min(r, g, b), delta = max - min;
+      let h = 0;
+      if (delta) {
+        if (max === r) h = ((g - b) / delta) % 6;
+        else if (max === g) h = (b - r) / delta + 2;
+        else h = (r - g) / delta + 4;
+        h *= 60;
+        if (h < 0) h += 360;
+      }
+      return { h, s: max ? delta / max : 0, v: max };
+    }
+    function cpHsbToRgb(h, s, v) {
+      const hue = ((h % 360) + 360) % 360;
+      const c = v * s, x = c * (1 - Math.abs((hue / 60) % 2 - 1)), m = v - c;
+      let rgb;
+      if (hue < 60) rgb = [c, x, 0];
+      else if (hue < 120) rgb = [x, c, 0];
+      else if (hue < 180) rgb = [0, c, x];
+      else if (hue < 240) rgb = [0, x, c];
+      else if (hue < 300) rgb = [x, 0, c];
+      else rgb = [c, 0, x];
+      return rgb.map(ch => (ch + m) * 255);
+    }
+    const cpHsbToHex = (h, s, v) => cpRgbToHex(cpHsbToRgb(h, s, v));
+    function cpNormalizeHex(value) {
+      const rgb = cpHexToRgb(value);
+      return rgb ? cpRgbToHex(rgb) : '';
+    }
+
+    let cpOpen = null;   // the currently open picker session
+    function cpCloseActive(restore) {
+      if (!cpOpen) return;
+      const session = cpOpen;
+      cpOpen = null;
+      session.cleanup();
+      if (restore) session.restore();
+    }
+    function cpPosition(pop, anchor) {
+      const rect = anchor.getBoundingClientRect();
+      const margin = 8;
+      const width = pop.offsetWidth || 258;
+      const height = pop.offsetHeight || 360;
+      let left = rect.left;
+      if (left + width > window.innerWidth - margin) left = window.innerWidth - width - margin;
+      let top = rect.bottom + 6;
+      if (top + height > window.innerHeight - margin) top = rect.top - height - 6;
+      pop.style.left = Math.max(margin, left) + 'px';
+      pop.style.top = Math.max(margin, top) + 'px';
+    }
+
+    // opts: { title, fallback } — fallback is used when the input has no valid hex yet.
+    function attachColorPicker(input, opts) {
+      const options = opts || {};
+      const fallbackColor = cpNormalizeHex(options.fallback) || '#ff5a36';
+      const valueDescriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+      const readValue = () => cpNormalizeHex(valueDescriptor.get.call(input)) || fallbackColor;
+
+      input.classList.add('cp-native');
+      const swatch = el('button', { type: 'button', class: 'cp-swatch', title: options.title || 'Pick a color', 'aria-label': options.title || 'Pick a color' });
+      const hexLabel = el('code', { class: 'cp-hexlabel' });
+      const attach = el('span', { class: 'cp-attach' }, swatch, hexLabel);
+      input.insertAdjacentElement('afterend', attach);
+
+      // Keep the visible swatch in step with programmatic .value / .disabled changes.
+      function paint() {
+        const color = readValue();
+        swatch.style.background = color;
+        swatch.disabled = !!input.disabled;
+        swatch.classList.toggle('cp-disabled', !!input.disabled);
+        hexLabel.textContent = color;
+        if (cpOpen && cpOpen.input === input) cpOpen.load(color);
+      }
+      Object.defineProperty(input, 'value', {
+        configurable: true,
+        enumerable: true,
+        get() { return valueDescriptor.get.call(input); },
+        set(value) { valueDescriptor.set.call(input, value); paint(); }
+      });
+      const observer = new MutationObserver(paint);   // e.g. the "Site default" checkbox toggles disabled
+      observer.observe(input, { attributes: true, attributeFilter: ['disabled'] });
+      input.addEventListener('input', paint);
+      swatch.addEventListener('click', () => open());
+
+      function open() {
+        if (input.disabled || cpOpen) return;
+        const original = readValue();
+        let state = cpRgbToHsb(cpHexToRgb(original));
+
+        const svHandle = el('div', { class: 'cp-sv-handle' });
+        const sv = el('div', { class: 'cp-sv' }, el('div', { class: 'cp-sv-white' }), el('div', { class: 'cp-sv-black' }), svHandle);
+        const hueHandle = el('div', { class: 'cp-hue-handle' });
+        const hue = el('div', { class: 'cp-hue' }, hueHandle);
+        const newBox = el('div', { class: 'cp-swatch-color cp-new', title: 'New color (live preview)' });
+        const currentBox = el('div', { class: 'cp-swatch-color cp-current', title: 'Click to go back to the original color' });
+        currentBox.style.background = original;
+        const newWrap = el('div', { class: 'cp-swatch-box' }, el('span', { text: 'New' }), newBox);
+        const currentWrap = el('div', { class: 'cp-swatch-box' }, el('span', { text: 'Current' }), currentBox);
+
+        const hInput = el('input', { type: 'number', min: '0', max: '360', step: '1', 'aria-label': 'Hue' });
+        const sInput = el('input', { type: 'number', min: '0', max: '100', step: '1', 'aria-label': 'Saturation' });
+        const bInput = el('input', { type: 'number', min: '0', max: '100', step: '1', 'aria-label': 'Brightness' });
+        const hexInput = el('input', { type: 'text', spellcheck: 'false', maxlength: '7', placeholder: '#rrggbb', 'aria-label': 'Hex color' });
+        const titleHex = el('code');
+        const fields = el('div', { class: 'cp-fields' },
+          el('div', {}, el('label', { text: 'H' }), hInput),
+          el('div', {}, el('label', { text: 'S' }), sInput),
+          el('div', {}, el('label', { text: 'B' }), bInput));
+        const hexRow = el('div', { class: 'cp-hex-row' }, el('label', { text: 'Hex' }), hexInput);
+        const cancelBtn = mini('Cancel', 'Close without keeping this color', () => cpCloseActive(true));
+        const okBtn = mini('OK', 'Keep this color', () => cpCloseActive(false), { class: 'mini ok' });
+        const actions = el('div', { class: 'cp-actions' }, cancelBtn, okBtn);
+        const pop = el('div', { class: 'cp-pop', role: 'dialog', 'aria-label': options.title || 'Color picker', tabindex: '-1' },
+          el('div', { class: 'cp-pop-head' }, el('span', { text: options.title || 'Pick a color' }), titleHex),
+          el('div', { class: 'cp-body' }, sv, hue),
+          el('div', { class: 'cp-swatches' }, newWrap, currentWrap),
+          fields, hexRow, actions);
+
+        const currentHex = () => cpHsbToHex(state.h, state.s, state.v);
+        function render() {
+          const hex = currentHex();
+          sv.style.background = 'hsl(' + Math.round(state.h) + ', 100%, 50%)';
+          svHandle.style.left = (state.s * 100) + '%';
+          svHandle.style.top = ((1 - state.v) * 100) + '%';
+          hueHandle.style.top = (state.h / 360 * 100) + '%';
+          hInput.value = String(Math.round(state.h));
+          sInput.value = String(Math.round(state.s * 100));
+          bInput.value = String(Math.round(state.v * 100));
+          if (document.activeElement !== hexInput) hexInput.value = hex;
+          titleHex.textContent = hex;
+          newBox.style.background = hex;
+          return hex;
+        }
+        // Push the live value into the native input and tell the rest of the admin about it.
+        function live(hex) {
+          if (valueDescriptor.get.call(input) !== hex) {
+            valueDescriptor.set.call(input, hex);
+            paint();
+          }
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        function load(hex) {
+          const rgb = cpHexToRgb(hex);
+          if (!rgb) return;
+          const hsb = cpRgbToHsb(rgb);
+          if (cpHsbToHex(hsb.h, hsb.s, hsb.v) === currentHex()) return;
+          state = hsb;
+          render();
+        }
+
+        let svDragging = false;
+        function pickSv(event) {
+          const rect = sv.getBoundingClientRect();
+          state.s = cpClamp((event.clientX - rect.left) / rect.width, 0, 1);
+          state.v = 1 - cpClamp((event.clientY - rect.top) / rect.height, 0, 1);
+          live(render());
+        }
+        sv.addEventListener('pointerdown', e => { e.preventDefault(); svDragging = true; sv.setPointerCapture(e.pointerId); pickSv(e); });
+        sv.addEventListener('pointermove', e => { if (svDragging) pickSv(e); });
+        sv.addEventListener('pointerup', () => { svDragging = false; });
+        sv.addEventListener('pointercancel', () => { svDragging = false; });
+
+        let hueDragging = false;
+        function pickHue(event) {
+          const rect = hue.getBoundingClientRect();
+          state.h = cpClamp((event.clientY - rect.top) / rect.height, 0, 1) * 360;
+          live(render());
+        }
+        hue.addEventListener('pointerdown', e => { e.preventDefault(); hueDragging = true; hue.setPointerCapture(e.pointerId); pickHue(e); });
+        hue.addEventListener('pointermove', e => { if (hueDragging) pickHue(e); });
+        hue.addEventListener('pointerup', () => { hueDragging = false; });
+        hue.addEventListener('pointercancel', () => { hueDragging = false; });
+
+        function applyFields() {
+          state.h = cpClamp(cpNumber(hInput.value, state.h), 0, 360);
+          state.s = cpClamp(cpNumber(sInput.value, state.s * 100), 0, 100) / 100;
+          state.v = cpClamp(cpNumber(bInput.value, state.v * 100), 0, 100) / 100;
+          live(render());
+        }
+        hInput.addEventListener('input', applyFields);
+        sInput.addEventListener('input', applyFields);
+        bInput.addEventListener('input', applyFields);
+        hexInput.addEventListener('input', () => {
+          const raw = hexInput.value.trim();
+          const hex = cpNormalizeHex(/^#/.test(raw) ? raw : '#' + raw);
+          if (!hex) return;
+          state = cpRgbToHsb(cpHexToRgb(hex));
+          live(render());
+        });
+        hexInput.addEventListener('blur', () => { hexInput.value = currentHex(); });
+        hexInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); cpCloseActive(false); } });
+        newBox.addEventListener('click', () => cpCloseActive(false));
+        currentBox.addEventListener('click', () => { state = cpRgbToHsb(cpHexToRgb(original)); live(render()); });
+
+        function onKey(event) { if (event.key === 'Escape') { event.preventDefault(); cpCloseActive(true); } }
+        function onOutside(event) { if (!pop.contains(event.target)) cpCloseActive(false); }
+        function onViewportChange() { cpCloseActive(false); }
+        function cleanup() {
+          pop.remove();
+          document.removeEventListener('keydown', onKey, true);
+          document.removeEventListener('pointerdown', onOutside, true);
+          window.removeEventListener('scroll', onViewportChange, true);
+          window.removeEventListener('resize', onViewportChange);
+        }
+        function restore() { live(original); }
+
+        document.addEventListener('keydown', onKey, true);
+        setTimeout(() => document.addEventListener('pointerdown', onOutside, true), 0);
+        window.addEventListener('scroll', onViewportChange, true);
+        window.addEventListener('resize', onViewportChange);
+        cpOpen = { input, load, cleanup, restore };
+        document.body.append(pop);
+        cpPosition(pop, attach);
+        render();
+        pop.focus();
+      }
+
+      paint();
+      return { input, open, paint };
     }
 
     // ======================================================================
@@ -1601,17 +1976,30 @@
     // ======================================================================
     // Site settings: appearance + content drafts, live preview, save bar
     // ======================================================================
-    // These defaults mirror APPEARANCE-CONTRACT.md. They only make the form usable;
-    // the server always validates and its sanitized response is treated as authoritative.
+    // These defaults mirror APPEARANCE-CONTRACT.md + V2-CONTRACT.md. They only make the form
+    // usable; the server always validates and its sanitized response is authoritative.
     const APPEARANCE_DEFAULTS = {
-      home: { columns: 3, columnsMobile: 1, maxWidth: 1100, gapX: 2, gapY: 4, coverRatio: '4/3', coverFit: 'cover', titleSize: 1, titleWeight: 400, showTitles: true },
+      home: { columns: 3, columnsMobile: 1, maxWidth: -1, gapX: 2, gapY: 4, coverRatio: '4/3', coverFit: 'cover', titleSize: 1, titleWeight: 400, showTitles: true },
       project: { titleSize: 2.5, descriptionWidth: 600, defaultWidth: 1100, defaultGap: 2, carouselShow: true, carouselItemWidth: 280, carouselCoverRatio: '4/3' },
       type: { font: 'open-sans', scale: 1, headingWeight: 600, navSize: 0.85, navSpacing: 1.5, navUppercase: true },
-      header: { layout: 'nav-left', logoHeight: 40, paddingY: 1.5, paddingX: 4, sticky: true }
+      header: { layout: 'nav-left', logoHeight: 40, paddingY: 1.5, paddingX: 4, sticky: true },
+      colors: { navActive: '#ff5a36', titleHover: '#ff5a36', logo: '', favicon: '' }
     };
     const CONTENT_DEFAULTS = {
       seo: { siteName: 'Jon Messier', homeTitle: 'Jon Messier | Portfolio', description: '', ogImage: '', favicon: '' },
       contact: { heading: 'Contact', intro: "Have a project in mind or a question? Send a message and I'll get back to you.", success: 'Thanks! Your message was sent.', email: '' },
+      about: {
+        eyebrow: 'About me',
+        headline: "I'm Jon Messier.",
+        subhead: 'But I am also...',
+        roles: 'A visual storyteller.\nA restless learner.\nA curious generalist.',
+        intro: "I'm a multidisciplinary designer focused on visual storytelling, typography, and design that connects with people.",
+        quote: 'For me, a project reaches perfection not when there is nothing left to add, but when there is nothing left to take away.',
+        quoteText: 'Good design should feel effortless, refined down to the essentials, yet strong enough to resonate and endure.',
+        headshot: '',
+        buttonText: "Let's get in touch!",
+        buttonUrl: '/contact'
+      },
       footer: { show: true, text: '', social: [] }
     };
 
@@ -1627,12 +2015,12 @@
     // Clamps every appearance value to the enums/range in the contract, filling in defaults.
     function sanitizeAppearance(raw) {
       const src = raw && typeof raw === 'object' ? raw : {};
-      const home = src.home || {}, project = src.project || {}, type = src.type || {}, header = src.header || {};
+      const home = src.home || {}, project = src.project || {}, type = src.type || {}, header = src.header || {}, colors = src.colors || {};
       return {
         home: {
           columns: clampIntValue(home.columns, 1, 4, 3),
           columnsMobile: clampIntValue(home.columnsMobile, 1, 2, 1),
-          maxWidth: pickNumber(home.maxWidth, [860, 1100, 1300, 1500, 0], 1100),
+          maxWidth: pickNumber(home.maxWidth, [-1, 0, 860, 1100, 1300, 1500], -1),
           gapX: clampNumberValue(home.gapX, 0, 4, 2),
           gapY: clampNumberValue(home.gapY, 1, 6, 4),
           coverRatio: pickOne(home.coverRatio, ['4/3', '3/2', '16/9', '1/1', 'natural'], '4/3'),
@@ -1664,17 +2052,25 @@
           paddingY: clampNumberValue(header.paddingY, 0.75, 2.5, 1.5),
           paddingX: clampNumberValue(header.paddingX, 1, 5, 4),
           sticky: asBool(header.sticky, true)
+        },
+        colors: {
+          navActive: isHexColor(colors.navActive) ? colors.navActive.toLowerCase() : '#ff5a36',
+          titleHover: isHexColor(colors.titleHover) ? colors.titleHover.toLowerCase() : '#ff5a36',
+          logo: isHexColor(colors.logo) ? colors.logo.toLowerCase() : '',
+          favicon: isHexColor(colors.favicon) ? colors.favicon.toLowerCase() : ''
         }
       };
     }
 
-    // Same idea for content; social links are capped at 4 and only http(s) images survive.
+    // Same idea for content; social links are capped at 4, URLs are checked, roles are capped at 6 lines.
     function sanitizeContent(raw) {
       const src = raw && typeof raw === 'object' ? raw : {};
-      const seo = src.seo || {}, contact = src.contact || {}, footer = src.footer || {};
+      const seo = src.seo || {}, contact = src.contact || {}, about = src.about || {}, footer = src.footer || {};
       const social = Array.isArray(footer.social)
         ? footer.social.slice(0, 4).map(s => ({ label: asText(s && s.label, ''), url: asText(s && s.url, '') }))
         : [];
+      const roles = asText(about.roles, CONTENT_DEFAULTS.about.roles)
+        .replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').slice(0, 6).join('\n');
       return {
         seo: {
           siteName: asText(seo.siteName, CONTENT_DEFAULTS.seo.siteName),
@@ -1689,6 +2085,18 @@
           success: asText(contact.success, CONTENT_DEFAULTS.contact.success),
           email: asText(contact.email, '')
         },
+        about: {
+          eyebrow: asText(about.eyebrow, CONTENT_DEFAULTS.about.eyebrow),
+          headline: asText(about.headline, CONTENT_DEFAULTS.about.headline),
+          subhead: asText(about.subhead, CONTENT_DEFAULTS.about.subhead),
+          roles,
+          intro: asText(about.intro, CONTENT_DEFAULTS.about.intro),
+          quote: asText(about.quote, CONTENT_DEFAULTS.about.quote),
+          quoteText: asText(about.quoteText, CONTENT_DEFAULTS.about.quoteText),
+          headshot: isHttpUrl(about.headshot) ? about.headshot : '',
+          buttonText: asText(about.buttonText, CONTENT_DEFAULTS.about.buttonText),
+          buttonUrl: asText(about.buttonUrl, CONTENT_DEFAULTS.about.buttonUrl)
+        },
         footer: { show: asBool(footer.show, true), text: asText(footer.text, ''), social }
       };
     }
@@ -1702,6 +2110,20 @@
       saved: isHexColor(CONFIG.siteBg) ? CONFIG.siteBg : '#181818',
       value: isHexColor(CONFIG.siteBg) ? CONFIG.siteBg : '#181818'
     };
+    // Branding info from the server (raw uploaded files). Falls back to the v1 locals and the
+    // uploaded filenames while the V2 server is still landing.
+    const BRANDING = (function () {
+      const raw = DATA.branding || {};
+      const isSvgUrl = (url) => typeof url === 'string' && /\.svg(?:[?#]|$)/i.test(url);
+      const logoUrl = raw.logoUrl || DATA.logoUrl || '';
+      const faviconUrl = raw.faviconUrl || (DRAFTS.content.seo && DRAFTS.content.seo.favicon) || '';
+      return {
+        logoUrl,
+        faviconUrl,
+        logoIsSvg: typeof raw.logoIsSvg === 'boolean' ? raw.logoIsSvg : isSvgUrl(logoUrl),
+        faviconIsSvg: typeof raw.faviconIsSvg === 'boolean' ? raw.faviconIsSvg : isSvgUrl(faviconUrl)
+      };
+    })();
 
     // ---- Draft object path helpers ----
     function getPath(obj, path) {
@@ -1723,11 +2145,13 @@
     }
     function syncAppearanceControls() {
       document.querySelectorAll('[data-draft="appearance"]').forEach(syncField);
+      syncColorControls();
     }
     function syncContentControls() {
       document.querySelectorAll('[data-draft="content"]').forEach(syncField);
       renderSocialRows();
       renderSeoPreviews();
+      renderAboutHeadshotPreview();
     }
 
     // ---- Dirty state + save bar ----
@@ -1780,7 +2204,79 @@
       node.addEventListener('change', () => apply(true));
     });
 
-    // ---- Live preview of the homepage (unsaved draft applied as CSS variables) ----
+    // ---- Colors card: pickers + logo/favicon tint logic ----
+    const colorNavInput = document.getElementById('setColorNavActive');
+    const colorTitleInput = document.getElementById('setColorTitleHover');
+    const colorLogoInput = document.getElementById('setColorLogo');
+    const colorFaviconInput = document.getElementById('setColorFavicon');
+    const tintLogoCheck = document.getElementById('tintLogo');
+    const tintFaviconCheck = document.getElementById('tintFavicon');
+    const logoTintHint = document.getElementById('logoTintHint');
+    const faviconTintHint = document.getElementById('faviconTintHint');
+    const lastTint = { logo: '#ff5a36', favicon: '#ff5a36' };
+
+    attachColorPicker(colorNavInput, { title: 'Nav active color' });
+    attachColorPicker(colorTitleInput, { title: 'Project title hover color' });
+    attachColorPicker(colorLogoInput, { title: 'Logo tint color', fallback: '#ff5a36' });
+    attachColorPicker(colorFaviconInput, { title: 'Favicon tint color', fallback: '#ff5a36' });
+    attachColorPicker(document.getElementById('siteBgPicker'), { title: 'Site background color' });
+    document.querySelectorAll('.f-bg').forEach(input => attachColorPicker(input, { title: 'Project background color' }));
+
+    const tintSupported = (kind) => (kind === 'logo' ? BRANDING.logoIsSvg : BRANDING.faviconIsSvg);
+    const tintInput = (kind) => (kind === 'logo' ? colorLogoInput : colorFaviconInput);
+    const tintCheckbox = (kind) => (kind === 'logo' ? tintLogoCheck : tintFaviconCheck);
+    const tintHintEl = (kind) => (kind === 'logo' ? logoTintHint : faviconTintHint);
+
+    // Refreshes the tint checkboxes/pickers from the appearance draft (and SVG support).
+    function syncColorControls() {
+      ['logo', 'favicon'].forEach(kind => {
+        const input = tintInput(kind), checkbox = tintCheckbox(kind), hint = tintHintEl(kind);
+        const supported = tintSupported(kind);
+        const color = DRAFTS.appearance.colors[kind] || '';
+        if (isHexColor(color)) lastTint[kind] = color;
+        checkbox.disabled = !supported;
+        checkbox.checked = supported && !!color;
+        input.disabled = !supported || !color;
+        input.value = color || lastTint[kind];
+        if (!supported) {
+          hint.textContent = kind === 'logo'
+            ? 'Tint only works with an SVG logo. Upload an SVG logo to enable it.'
+            : 'Tint only works with an SVG favicon. Upload an SVG favicon to enable it.';
+        } else {
+          hint.textContent = color ? 'The uploaded SVG is recolored on every page.' : 'Turn on to recolor the uploaded SVG.';
+        }
+      });
+    }
+    function onTintToggle(kind) {
+      const checkbox = tintCheckbox(kind), input = tintInput(kind);
+      if (checkbox.disabled) return;
+      if (checkbox.checked) {
+        const current = DRAFTS.appearance.colors[kind];
+        const color = isHexColor(input.value) ? input.value.toLowerCase() : (isHexColor(current) ? current : lastTint[kind]);
+        DRAFTS.appearance.colors[kind] = color;
+        lastTint[kind] = color;
+        input.value = color;
+      } else {
+        if (isHexColor(input.value)) lastTint[kind] = input.value.toLowerCase();
+        DRAFTS.appearance.colors[kind] = '';
+      }
+      syncColorControls();
+      settingsTouched();
+    }
+    tintLogoCheck.addEventListener('change', () => onTintToggle('logo'));
+    tintFaviconCheck.addEventListener('change', () => onTintToggle('favicon'));
+    // The live picker dispatches "input"; make sure a tinted value only sticks while its checkbox is on.
+    ['logo', 'favicon'].forEach(kind => {
+      tintInput(kind).addEventListener('input', () => {
+        const value = tintInput(kind).value;
+        const enabled = tintCheckbox(kind).checked;
+        DRAFTS.appearance.colors[kind] = enabled && isHexColor(value) ? value.toLowerCase() : '';
+        if (enabled && isHexColor(value)) lastTint[kind] = value.toLowerCase();
+        settingsTouched();
+      });
+    });
+
+    // ---- Live preview of the Portfolio page (unsaved draft applied as CSS variables) ----
     const previewFrame = document.getElementById('livePreview');
     const previewWrap = document.getElementById('previewWrap');
     const FONT_STACKS = {
@@ -1809,7 +2305,7 @@
         '--header-pad-x': a.header.paddingX + 'rem',
         '--home-cols': String(a.home.columns),
         '--home-cols-mobile': String(a.home.columnsMobile),
-        '--home-max': a.home.maxWidth === 0 ? 'none' : a.home.maxWidth + 'px',
+        '--home-max': a.home.maxWidth === 0 ? 'none' : a.home.maxWidth === -1 ? 'calc(80vw + 3rem)' : a.home.maxWidth + 'px',
         '--home-gap-x': a.home.gapX + 'rem',
         '--home-gap-y': a.home.gapY + 'rem',
         '--home-cover-ratio': ratio(a.home.coverRatio),
@@ -1820,7 +2316,11 @@
         '--project-title-size': a.project.titleSize + 'rem',
         '--project-desc-width': a.project.descriptionWidth + 'px',
         '--carousel-item-width': a.project.carouselItemWidth + 'px',
-        '--carousel-cover-ratio': ratio(a.project.carouselCoverRatio)
+        '--carousel-cover-ratio': ratio(a.project.carouselCoverRatio),
+        '--nav-active-color': a.colors.navActive,
+        '--title-hover-color': a.colors.titleHover,
+        '--accent': a.colors.navActive,
+        '--font-display': "'Instrument Serif', Georgia, 'Times New Roman', serif"
       };
     }
     function footerTextPreview() {
@@ -1841,6 +2341,17 @@
         social.replaceChildren(...links.map(s => el('a', { href: s.url, target: '_blank', rel: 'noopener', text: s.label })));
       }
     }
+    // Optional approximation: point the preview's logo at the tint route when the logo is an SVG.
+    function applyLogoTintPreview(doc) {
+      const tint = DRAFTS.appearance.colors.logo;
+      const tintable = BRANDING.logoIsSvg && isHexColor(tint);
+      doc.querySelectorAll('header img, footer img, .logo img').forEach(img => {
+        if (!img.dataset.cpOriginal) img.dataset.cpOriginal = img.getAttribute('src') || '';
+        if (tintable) img.src = '/brand/logo.svg?color=' + encodeURIComponent(tint);
+        else if (img.dataset.cpOriginal) img.src = img.dataset.cpOriginal;
+        else img.removeAttribute('src');
+      });
+    }
     function applyPreview() {
       const doc = previewDoc();
       if (!doc || !doc.documentElement || !doc.body) return;
@@ -1849,10 +2360,11 @@
       Object.keys(vars).forEach(name => style.setProperty(name, vars[name]));
       const header = doc.querySelector('header');
       if (header) header.dataset.layout = DRAFTS.appearance.header.layout;
+      applyLogoTintPreview(doc);
       applyFooterPreview(doc);
     }
     function refreshPreview() {
-      previewFrame.src = '/?preview=' + Date.now();
+      previewFrame.src = '/portfolio?preview=' + Date.now();
     }
     previewFrame.addEventListener('load', applyPreview);
     document.getElementById('previewRefresh').addEventListener('click', refreshPreview);
@@ -1931,6 +2443,35 @@
     }
     document.getElementById('ogImageUpload').addEventListener('click', () => uploadSeoImage('og'));
     document.getElementById('faviconUpload').addEventListener('click', () => uploadSeoImage('favicon'));
+
+    // ---- About page headshot upload ----
+    const aboutHeadshotPreview = document.getElementById('aboutHeadshotPreview');
+    function renderAboutHeadshotPreview() {
+      const url = DRAFTS.content.about.headshot;
+      aboutHeadshotPreview.replaceChildren(url ? el('img', { src: url, alt: 'About headshot preview' }) : el('span', { text: 'None' }));
+    }
+    document.getElementById('aboutHeadshotUpload').addEventListener('click', async () => {
+      const button = document.getElementById('aboutHeadshotUpload');
+      const status = document.getElementById('aboutHeadshotStatus');
+      const files = await pickFiles(false);
+      if (!files.length) return;
+      button.disabled = true;
+      setMsg(status, 'Uploading...');
+      try {
+        // Uploaded as-is: keep the photo's original format and quality.
+        const url = await uploadToR2(files[0]);
+        DRAFTS.content.about.headshot = url;
+        settingsTouched();
+        renderAboutHeadshotPreview();
+        setMsg(status, 'Uploaded. Click “Save changes” to publish it.', 'ok');
+        toast('Headshot uploaded. Save changes to publish.', 'ok');
+      } catch (err) {
+        setMsg(status, err.message, 'err');
+        toast(err.message, 'err');
+      } finally {
+        button.disabled = false;
+      }
+    });
 
     // ---- Read-only security status (DATA.securityStatus) ----
     function renderSecurity() {
@@ -2031,6 +2572,14 @@
       }
       return '';
     }
+    // Button URL may be a local path ("/contact") or an absolute http(s) URL.
+    function validateAbout(content) {
+      const url = String(content.about.buttonUrl || '').trim();
+      if (url && url.charAt(0) !== '/' && !isHttpUrl(url)) {
+        return 'The About button URL must start with "/" or with http:// / https://.';
+      }
+      return '';
+    }
     async function saveSettings() {
       const saveBtn = document.getElementById('settingsSave');
       saveBtn.disabled = true;
@@ -2051,7 +2600,8 @@
         if (JSON.stringify(DRAFTS.content) !== JSON.stringify(SAVED.content)) {
           const content = clone(DRAFTS.content);
           content.footer.social = socialForSave();
-          const problem = validateSocial(content.footer.social);
+          content.about.buttonUrl = content.about.buttonUrl.trim();
+          const problem = validateSocial(content.footer.social) || validateAbout(content);
           if (problem) throw new Error(problem);
           const data = await api('/api/settings/content', { content });
           DRAFTS.content = sanitizeContent(data.content || content);
