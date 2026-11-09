@@ -598,6 +598,13 @@
             </select>
           </div>
           <div class="field">
+            <label for="setTypeDisplayFont">About page display font</label>
+            <select id="setTypeDisplayFont" data-draft="appearance" data-path="type.displayFont">
+              <option value="site">Match site font</option>
+              <option value="instrument-serif">Instrument Serif (display)</option>
+            </select>
+          </div>
+          <div class="field">
             <label for="setTypeScale">Text scale</label>
             <input type="number" id="setTypeScale" min="0.9" max="1.15" step="0.01" data-draft="appearance" data-path="type.scale" data-kind="number">
           </div>
@@ -1981,7 +1988,7 @@
     const APPEARANCE_DEFAULTS = {
       home: { columns: 3, columnsMobile: 1, maxWidth: -1, gapX: 2, gapY: 4, coverRatio: '4/3', coverFit: 'cover', titleSize: 1, titleWeight: 400, showTitles: true },
       project: { titleSize: 2.5, descriptionWidth: 600, defaultWidth: 1100, defaultGap: 2, carouselShow: true, carouselItemWidth: 280, carouselCoverRatio: '4/3' },
-      type: { font: 'open-sans', scale: 1, headingWeight: 600, navSize: 0.85, navSpacing: 1.5, navUppercase: true },
+      type: { font: 'open-sans', scale: 1, headingWeight: 600, navSize: 0.85, navSpacing: 1.5, navUppercase: true, displayFont: 'site' },
       header: { layout: 'nav-left', logoHeight: 40, paddingY: 1.5, paddingX: 4, sticky: true },
       colors: { navActive: '#ff5a36', titleHover: '#ff5a36', logo: '', favicon: '' }
     };
@@ -2044,7 +2051,8 @@
           headingWeight: pickNumber(type.headingWeight, [500, 600, 700], 600),
           navSize: clampNumberValue(type.navSize, 0.7, 1, 0.85),
           navSpacing: clampNumberValue(type.navSpacing, 0, 3, 1.5),
-          navUppercase: asBool(type.navUppercase, true)
+          navUppercase: asBool(type.navUppercase, true),
+          displayFont: pickOne(type.displayFont, ['site', 'instrument-serif'], 'site')
         },
         header: {
           layout: pickOne(header.layout, ['nav-left', 'logo-left'], 'nav-left'),
@@ -2320,7 +2328,7 @@
         '--nav-active-color': a.colors.navActive,
         '--title-hover-color': a.colors.titleHover,
         '--accent': a.colors.navActive,
-        '--font-display': "'Instrument Serif', Georgia, 'Times New Roman', serif"
+        '--font-display': a.type.displayFont === 'instrument-serif' ? "'Instrument Serif', Georgia, 'Times New Roman', serif" : (FONT_STACKS[a.type.font] || FONT_STACKS['open-sans'])
       };
     }
     function footerTextPreview() {
