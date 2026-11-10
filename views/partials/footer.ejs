@@ -9,6 +9,7 @@
   var footerText = (footerConfig.text && String(footerConfig.text).trim()) ? String(footerConfig.text).trim() : '';
   var footerCopy = footerText || ('© ' + footerYear + ' ' + footerSiteName);
   var footerLogo = (typeof logoUrl !== 'undefined' && logoUrl) ? String(logoUrl) : '';
+  var footerLogoTinted = (typeof logoIsTinted !== 'undefined') ? !!logoIsTinted : false;
   // The server already validates these URLs; re-check http(s) so a bad row can never become a link.
   var footerSocials = Array.isArray(footerConfig.social) ? footerConfig.social.filter(function (item) {
     return item && item.label && typeof item.url === 'string' && /^https?:\/\//i.test(item.url);
@@ -17,7 +18,7 @@
 <%# The footer stays in the DOM (just hidden) when switched off, so the admin's live preview can toggle it on. %>
 <footer class="site-footer"<% if (!footerShow) { %> hidden<% } %>>
   <div class="footer-inner">
-    <% if (footerLogo) { %><img class="footer-logo" src="<%= footerLogo %>" alt="<%= footerSiteName %>" loading="lazy"><% } %>
+    <% if (footerLogo) { %><img class="footer-logo<%= footerLogoTinted ? ' logo-tinted' : '' %>" src="<%= footerLogo %>" alt="<%= footerSiteName %>" loading="lazy"><% } %>
     <%# Kept in the DOM even when empty so the admin's live preview can add social links. %>
     <ul class="footer-social" data-footer-social>
       <% footerSocials.forEach(function (link) { %>

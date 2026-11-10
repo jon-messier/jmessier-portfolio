@@ -70,7 +70,7 @@
   <link rel="stylesheet" href="/theme.css?bg=<%= encodeURIComponent(bgColor) %>">
 </head>
 <body id="top">
-  <%- include('partials/header', { logoUrl: logoSrc, active: activePage, appearance: appearanceData }) %>
+  <%- include('partials/header', { logoUrl: logoSrc, logoIsTinted: (typeof logoIsTinted !== 'undefined' ? !!logoIsTinted : false), active: activePage, appearance: appearanceData }) %>
   <main class="about-page">
     <section class="about-hero">
       <div class="about-container about-hero-grid">
@@ -125,7 +125,7 @@
     </section>
     <% } %>
   </main>
-  <%- include('partials/footer', { content: contentData, currentYear: pageYear, logoUrl: logoSrc }) %>
+  <%- include('partials/footer', { content: contentData, currentYear: pageYear, logoUrl: logoSrc, logoIsTinted: (typeof logoIsTinted !== 'undefined' ? !!logoIsTinted : false) }) %>
   <script>
     // Rotate the "I am also..." roles line. Static when there are fewer than two roles, and
     // disabled entirely for visitors who prefer reduced motion. Layout height is reserved in CSS.

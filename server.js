@@ -208,6 +208,7 @@ const getSite = async () => {
   const rawFavicon = content.seo.favicon || '';
   return {
     logoUrl: tintedBrandUrl(rawLogo, appearance.colors.logo, 'logo'),
+    logoIsTinted: !!(appearance.colors.logo && isSvgUrl(rawLogo) && tintableUrl(rawLogo)),
     faviconUrl: tintedBrandUrl(rawFavicon, appearance.colors.favicon, 'favicon'),
     branding: {
       logoUrl: rawLogo,

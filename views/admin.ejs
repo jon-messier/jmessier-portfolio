@@ -2396,9 +2396,8 @@
       const tintable = BRANDING.logoIsSvg && isHexColor(tint);
       doc.querySelectorAll('header img, footer img, .logo img').forEach(img => {
         if (!img.dataset.cpOriginal) img.dataset.cpOriginal = img.getAttribute('src') || '';
-        if (tintable) img.src = '/brand/logo.svg?color=' + encodeURIComponent(tint);
-        else if (img.dataset.cpOriginal) img.src = img.dataset.cpOriginal;
-        else img.removeAttribute('src');
+        if (tintable) { img.src = '/brand/logo.svg?color=' + encodeURIComponent(tint); img.style.filter = 'none'; }
+        else { img.style.filter = ''; if (img.dataset.cpOriginal) img.src = img.dataset.cpOriginal; else img.removeAttribute('src'); }
       });
     }
     function applyPreview() {

@@ -62,7 +62,7 @@
   <link rel="stylesheet" href="/theme.css?bg=<%= encodeURIComponent(bgColor) %>">
 </head>
 <body id="top">
-  <%- include('partials/header', { logoUrl: logoSrc, active: activePage, appearance: appearanceData }) %>
+  <%- include('partials/header', { logoUrl: logoSrc, logoIsTinted: (typeof logoIsTinted !== 'undefined' ? !!logoIsTinted : false), active: activePage, appearance: appearanceData }) %>
   <main class="project-page">
     <% if (previewMode) { %>
       <div class="preview-banner">This project is hidden. Only you can see it because you're logged in.</div>
@@ -110,7 +110,7 @@
     <span class="lightbox-close">&times;</span>
     <img id="lightbox-img" src="" oncontextmenu="return false;">
   </div>
-  <%- include('partials/footer', { content: contentData, currentYear: pageYear, logoUrl: logoSrc }) %>
+  <%- include('partials/footer', { content: contentData, currentYear: pageYear, logoUrl: logoSrc, logoIsTinted: (typeof logoIsTinted !== 'undefined' ? !!logoIsTinted : false) }) %>
   <script src="/script.js"></script>
 </body>
 </html>

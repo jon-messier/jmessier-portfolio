@@ -53,7 +53,7 @@
   <link rel="stylesheet" href="/theme.css?bg=<%= encodeURIComponent(bgColor) %>">
 </head>
 <body id="top">
-  <%- include('partials/header', { logoUrl: logoSrc, active: activePage, appearance: appearanceData }) %>
+  <%- include('partials/header', { logoUrl: logoSrc, logoIsTinted: (typeof logoIsTinted !== 'undefined' ? !!logoIsTinted : false), active: activePage, appearance: appearanceData }) %>
   <main class="contact-page">
     <div class="project-header">
       <h1><%= contactHeading %></h1>
@@ -126,6 +126,6 @@
       update();
     })();
   </script>
-  <%- include('partials/footer', { content: contentData, currentYear: pageYear, logoUrl: logoSrc }) %>
+  <%- include('partials/footer', { content: contentData, currentYear: pageYear, logoUrl: logoSrc, logoIsTinted: (typeof logoIsTinted !== 'undefined' ? !!logoIsTinted : false) }) %>
 </body>
 </html>
