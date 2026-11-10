@@ -14,7 +14,9 @@
   var projectData = (typeof project === 'object' && project) ? project : {};
   var projectTitle = (projectData.title && String(projectData.title).trim()) ? String(projectData.title).trim() : 'Project';
   var projectBlocks = Array.isArray(projectData.blocks) ? projectData.blocks : [];
-  var otherList = (typeof otherProjects !== 'undefined' && Array.isArray(otherProjects)) ? otherProjects : [];
+  var otherList = (typeof carouselProjects !== 'undefined' && Array.isArray(carouselProjects)) ? carouselProjects : [];
+  var prevItem = (typeof prevProject === 'object' && prevProject) ? prevProject : null;
+  var nextItem = (typeof nextProject === 'object' && nextProject) ? nextProject : null;
   var previewMode = (typeof isPreview !== 'undefined') ? !!isPreview : false;
 
   // Page-specific sharing data: a project page uses the project's own description/cover.
@@ -78,7 +80,8 @@
           <% if (block.type === 'single') { %>
             <div class="block-single"><img src="<%= block.url %>" onclick="openLightbox(this.src)" oncontextmenu="return false;"></div>
           <% } else if (block.type === 'grid') { %>
-            <div class="block-grid" data-cols="<%= block.cols %>" data-gap="<%= block.gap %>">
+            <% var gridVisible = Array.isArray(block.images) ? block.images.filter(Boolean).length : 0; %>
+            <div class="block-grid" data-cols="<%= block.cols %>" data-gap="<%= block.gap %>" data-odd="<%= (gridVisible % 2 === 1 && Number(block.cols) >= 2) ? '1' : '0' %>">
               <% (Array.isArray(block.images) ? block.images : []).forEach(function(img) { if (img) { %><img src="<%= img %>" onclick="openLightbox(this.src)" oncontextmenu="return false;"><% } }); %>
             </div>
           <% } else if (block.type === 'embed') { %>
@@ -92,16 +95,35 @@
 
     <a href="#top" class="back-to-top">↑ Back to Top</a>
 
-    <% if (showCarousel && otherList.length > 0) { %>
+    <% if (showCarousel && otherList.length > 1) { %>
       <div class="carousel-section">
         <h2 class="carousel-title">More Projects</h2>
-        <div class="carousel">
-          <% otherList.forEach(function(op) { %>
-            <a href="/project/<%= op.slug %>" class="carousel-item">
-              <img src="<%= op.cover_image %>" alt="<%= op.title %>" oncontextmenu="return false;">
-              <h3><%= op.title %></h3>
-            </a>
-          <% }); %>
+        <div class="carousel-wrap">
+          <% if (prevItem) { %>
+            <a class="carousel-arrow carousel-prev" href="/project/<%= prevItem.slug %>" aria-label="Previous project">←</a>
+          <% } else { %>
+            <span class="carousel-arrow carousel-prev is-disabled" aria-hidden="true">←</span>
+          <% } %>
+          <div class="carousel" id="projectCarousel">
+            <% otherList.forEach(function(op) { var isCurrent = String(op.id) === String(projectData.id); %>
+              <% if (isCurrent) { %>
+                <div class="carousel-item is-current" aria-current="page">
+                  <img src="<%= op.cover_image %>" alt="<%= op.title %>" oncontextmenu="return false;">
+                  <h3><%= op.title %></h3>
+                </div>
+              <% } else { %>
+                <a href="/project/<%= op.slug %>" class="carousel-item">
+                  <img src="<%= op.cover_image %>" alt="<%= op.title %>" oncontextmenu="return false;">
+                  <h3><%= op.title %></h3>
+                </a>
+              <% } %>
+            <% }); %>
+          </div>
+          <% if (nextItem) { %>
+            <a class="carousel-arrow carousel-next" href="/project/<%= nextItem.slug %>" aria-label="Next project">→</a>
+          <% } else { %>
+            <span class="carousel-arrow carousel-next is-disabled" aria-hidden="true">→</span>
+          <% } %>
         </div>
       </div>
     <% } %>

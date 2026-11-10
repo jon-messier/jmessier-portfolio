@@ -99,6 +99,8 @@ main.project-page { max-width: 1440px; }
 .block-grid[data-gap="0.5"] { gap: 0.5rem; }
 .block-grid[data-gap="3"] { gap: 3rem; }
 .block-grid img { display: block; width: 100%; height: auto; border-radius: 8px; cursor: zoom-in; transition: opacity 0.2s; }
+/* An odd-sized grid ends with one enlarged image spanning two tracks (aspect ratio preserved). */
+.block-grid[data-odd="1"] img:last-child { grid-column: span 2; }
 .block-grid img:hover { opacity: 0.8; }
 .block-embed { width: 100%; border-radius: 8px; overflow: hidden; background: #000; }
 .block-embed iframe { width: 100% !important; min-height: 600px; border: none; display: block; }
@@ -109,14 +111,25 @@ main.project-page { max-width: 1440px; }
 
 /* Carousel */
 .carousel-section { margin-top: 6rem; border-top: 1px solid var(--border, #333); padding-top: 3rem; }
-.carousel-title { font-size: 1rem; text-transform: uppercase; letter-spacing: 2px; color: var(--muted, #888); margin-bottom: 1.5rem; }
-.carousel { display: flex; gap: 2rem; overflow-x: auto; padding-bottom: 1rem; scroll-snap-type: x mandatory; }
+.carousel-title { font-size: 1rem; text-transform: uppercase; letter-spacing: 2px; color: var(--muted, #888); margin-bottom: 1rem; }
+.carousel-wrap { position: relative; }
+.carousel { display: flex; gap: 2rem; overflow-x: auto; padding: 1.5rem 4rem 1rem; scroll-snap-type: x mandatory; align-items: center; }
 .carousel::-webkit-scrollbar { height: 6px; }
 .carousel::-webkit-scrollbar-thumb { background: var(--border, #444); border-radius: 3px; }
-.carousel-item { flex: 0 0 var(--carousel-item-width, 280px); scroll-snap-align: start; }
+.carousel-item { flex: 0 0 var(--carousel-item-width, 280px); scroll-snap-align: center; border-radius: 14px; }
 .carousel-item img { width: 100%; aspect-ratio: var(--carousel-cover-ratio, 4 / 3); object-fit: cover; border-radius: 8px; margin-bottom: 0.75rem; transition: opacity 0.2s; }
 .carousel-item:hover img { opacity: 0.8; }
 .carousel-item h3 { font-size: 0.95rem; font-weight: 400; text-align: center; }
+/* Current project: larger, framed in a lighter grey box, and slightly overlapping its neighbours. */
+.carousel-item.is-current { flex: 0 0 calc(var(--carousel-item-width, 280px) * 1.35); margin-inline: -2.5rem; padding: 0.75rem 0.75rem 1rem; background: var(--raised, rgba(255, 255, 255, 0.08)); border: 1px solid var(--border, rgba(255, 255, 255, 0.16)); box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35); position: relative; z-index: 2; }
+.carousel-item.is-current img { border-radius: 10px; margin-bottom: 0.85rem; }
+.carousel-item.is-current h3 { color: var(--text, #fff); font-size: 1rem; font-weight: 600; }
+.carousel-item.is-current:hover img { opacity: 1; }
+.carousel-arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 3; display: flex; align-items: center; justify-content: center; width: 46px; height: 46px; border-radius: 50%; background: var(--header-bg, rgba(18, 18, 18, 0.92)); border: 1px solid var(--border, rgba(255, 255, 255, 0.16)); color: var(--text, #fff); font-size: 1.35rem; line-height: 1; transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease; }
+.carousel-arrow:hover, .carousel-arrow:focus-visible { color: var(--accent, #13aeff); border-color: var(--accent, #13aeff); outline: none; }
+.carousel-prev { left: 0; }
+.carousel-next { right: 0; }
+.carousel-arrow.is-disabled { opacity: 0.25; pointer-events: none; }
 
 /* Contact Page */
 main.contact-page { max-width: 680px; }
@@ -211,6 +224,9 @@ main.about-page { max-width: none; margin: 0; padding: 0; }
   .block-grid[data-cols="1"] { grid-template-columns: minmax(0, 1fr); }
   .block-embed iframe { min-height: 400px; }
   .carousel-item { flex: 0 0 calc(var(--carousel-item-width, 280px) * 0.857); }
+  .carousel { gap: 1.25rem; padding: 1.25rem 3.25rem 0.75rem; }
+  .carousel-item.is-current { flex-basis: calc(var(--carousel-item-width, 280px) * 1.15); margin-inline: -1.75rem; padding: 0.5rem 0.5rem 0.75rem; }
+  .carousel-arrow { width: 36px; height: 36px; font-size: 1.1rem; }
 }
 
 /* About page: phones — tighter type scale and a full-width, easy-to-tap CTA */
@@ -232,6 +248,9 @@ main.about-page { max-width: none; margin: 0; padding: 0; }
   .project-description { font-size: 0.95rem; }
   .block-embed iframe { min-height: 320px; }
   .carousel-item { flex: 0 0 calc(var(--carousel-item-width, 280px) * 0.714); }
+  .carousel { gap: 1rem; padding: 1rem 2.75rem 0.75rem; }
+  .carousel-item.is-current { flex-basis: calc(var(--carousel-item-width, 280px) * 1.05); margin-inline: -1.5rem; }
+  .carousel-arrow { width: 32px; height: 32px; font-size: 1rem; }
   .back-to-top { margin-top: 3rem; }
   .site-footer { padding: 2rem 1rem 2.5rem; }
 }

@@ -436,11 +436,17 @@ app.get('/project/:slug', async (req, res) => {
     // Hidden projects are only visible to you while logged in (as a preview)
     if (project.hidden && !req.session.loggedIn) return res.status(404).send('Project not found');
 
-    const others = await db.execute({ sql: `SELECT title, slug, cover_image FROM projects WHERE id != ? AND hidden = 0 ${ORDER}`, args: [project.id] });
+    const all = await db.execute(`SELECT id, title, slug, cover_image FROM projects WHERE hidden = 0 ${ORDER}`);
+    const carouselProjects = toObjects(all);
+    const currentIndex = carouselProjects.findIndex(p => Number(p.id) === Number(project.id));
+    const prevProject = currentIndex > 0 ? carouselProjects[currentIndex - 1] : null;
+    const nextProject = currentIndex >= 0 && currentIndex < carouselProjects.length - 1 ? carouselProjects[currentIndex + 1] : null;
     const site = await getSite();
     res.render('project', Object.assign({}, site, {
       project,
-      otherProjects: toObjects(others),
+      carouselProjects,
+      prevProject,
+      nextProject,
       bg: project.bg_color || site.siteBg,
       active: 'portfolio',
       isPreview: project.hidden
