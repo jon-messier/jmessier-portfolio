@@ -335,16 +335,24 @@ app.get(['/brand/logo.svg', '/brand/favicon.svg'], async (req, res) => {
 
     const upstream = await fetch(source, { signal: AbortSignal.timeout(5000) });
     if (!upstream.ok) return res.redirect(302, source);
-    const contentType = upstream.headers.get('content-type') || '';
-    if (contentType && !/svg/i.test(contentType)) return res.redirect(302, source);
     const svg = await upstream.text();
+    // The URL extension is already known to be .svg; trust the body over R2's MIME type because
+    // some uploads are stored as application/octet-stream even though they are SVGs.
+    if (!/<svg\b/i.test(svg)) return res.redirect(302, source);
     if (svg.length > 1024 * 1024) return res.status(413).send('SVG file is too large.');
 
     res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=86400');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'");
-    res.send(tintSvg(svg, color));
+    const tinted = tintSvg(svg, color);
+    // Safety net: if the recoloured markup is not a clean single SVG document, fall back to the
+    // original upload rather than serving a broken icon/logo.
+    const openingTag = (tinted.match(/<svg\b[\s\S]*?>/i) || [''])[0];
+    if (!openingTag || openingTag.indexOf('<', 1) !== -1 || !/<\/svg>\s*$/i.test(tinted.trim())) {
+      return res.redirect(302, source);
+    }
+    res.send(tinted);
   } catch (err) {
     console.error('Brand tint error:', err.message);
     if (source) return res.redirect(302, source);
@@ -358,11 +366,14 @@ app.get(['/brand/logo.svg', '/brand/favicon.svg'], async (req, res) => {
 app.post('/api/upload', requireLoginApi, async (req, res) => {
   const { filename = 'image', contentType } = req.body || {};
   const uniqueFilename = `img-${Date.now()}-${Math.round(Math.random() * 1000)}-${String(filename).replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+  // Browsers/OSes sometimes report an empty MIME type. Stamp SVGs correctly so <img>/favicon
+  // renders them instead of treating them as octet-streams.
+  const safeContentType = contentType || (/\.svg$/i.test(String(filename)) ? 'image/svg+xml' : undefined);
   try {
     const command = new PutObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME,
       Key: uniqueFilename,
-      ContentType: contentType,
+      ContentType: safeContentType,
     });
     const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
     res.json({ uploadUrl: signedUrl, finalUrl: `${process.env.R2_PUBLIC_URL}/${uniqueFilename}` });

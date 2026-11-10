@@ -138,32 +138,35 @@ main.contact-page { max-width: 680px; }
 .contact-sent p { color: var(--muted, #aaa); }
 .contact-sent .back-to-top { margin-top: 2rem; }
 
-/* About Page (site root, V2) */
+/* About Page (site root) */
 main.about-page { max-width: none; margin: 0; padding: 0; }
 .about-container { width: 100%; max-width: 1280px; margin-inline: auto; padding-inline: clamp(1.5rem, 5vw, 4rem); }
-.about-hero { padding-block: clamp(3rem, 7vw, 6.5rem) clamp(3rem, 6vw, 5.5rem); }
-.about-hero-grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.85fr); gap: clamp(2rem, 5vw, 4.5rem); align-items: center; }
-.about-eyebrow { font-family: var(--font-body, 'Open Sans', sans-serif); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted, #888); margin-bottom: clamp(1rem, 2.5vw, 1.75rem); }
-.about-headline { font-family: var(--font-display, 'Instrument Serif', Georgia, serif); font-size: clamp(2.7rem, 5.6vw, 4.8rem); font-weight: 400; line-height: 1.02; letter-spacing: -0.015em; }
-.about-subhead { font-family: var(--font-display, 'Instrument Serif', Georgia, serif); font-size: clamp(1.9rem, 3.9vw, 3.4rem); font-weight: 400; line-height: 1.08; color: var(--muted, #aaa); margin-top: 0.35em; }
-.about-roles { font-family: var(--font-display, 'Instrument Serif', Georgia, serif); font-size: clamp(1.9rem, 3.9vw, 3.4rem); font-weight: 400; line-height: 1.12; margin-top: clamp(1.5rem, 3vw, 2.75rem); min-height: 1.2em; }
+.about-hero { padding-block: clamp(3rem, 6vw, 5.5rem) clamp(2.5rem, 5vw, 4.5rem); }
+.about-hero-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: clamp(2rem, 4.5vw, 4rem); align-items: center; }
+.about-eyebrow { font-family: var(--font-body, 'Open Sans', sans-serif); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted, #888); margin-bottom: clamp(0.9rem, 2vw, 1.4rem); }
+.about-headline { font-family: var(--font-display, 'Open Sans', sans-serif); font-size: clamp(2.4rem, 4.2vw, 3.7rem); font-weight: var(--heading-weight, 600); line-height: 1.06; letter-spacing: -0.02em; }
+.about-subhead { font-family: var(--font-body, 'Open Sans', sans-serif); font-size: clamp(1.05rem, 1.5vw, 1.3rem); font-weight: 400; line-height: 1.55; color: var(--muted, #aaa); margin-top: 0.9rem; }
+.about-roles { font-family: var(--font-display, 'Open Sans', sans-serif); font-size: clamp(1.7rem, 2.8vw, 2.35rem); font-weight: 500; line-height: 1.25; margin-top: clamp(1.5rem, 3vw, 2rem); min-height: 1.35em; }
 .about-role { display: inline-block; transition: opacity 0.24s ease, transform 0.24s ease; }
 .about-role.is-changing { opacity: 0; transform: translateY(0.2em); }
 .about-roles-data { display: none; }
 .about-photo { margin: 0; }
-/* Inset frame keeps the photo off the viewport edge and gives it the reference's framed feel. */
-.about-photo-frame { padding: clamp(0.55rem, 1.1vw, 0.95rem); border: 1px solid var(--border, rgba(255, 255, 255, 0.12)); border-radius: 18px; background: var(--raised, rgba(255, 255, 255, 0.05)); }
-.about-photo-frame img { display: block; width: 100%; aspect-ratio: 4 / 4.4; object-fit: cover; border-radius: 12px; }
-.about-monogram { display: flex; align-items: center; justify-content: center; aspect-ratio: 4 / 4.4; border-radius: 12px; background: radial-gradient(circle at 28% 18%, var(--raised, rgba(255, 255, 255, 0.08)), transparent 62%), var(--bg, #181818); color: var(--accent, #ff5a36); font-family: var(--font-display, 'Instrument Serif', Georgia, serif); font-size: clamp(4rem, 11vw, 8rem); line-height: 1; letter-spacing: -0.02em; }
-.about-section { padding-block: clamp(3rem, 7vw, 6rem); border-top: 1px solid var(--border, rgba(255, 255, 255, 0.1)); }
+/* No border/frame: the headshot sits cleanly inside the page gutters and uses the same crop at
+   every breakpoint. */
+.about-photo-frame { margin: 0; padding: 0; border: 0; background: transparent; border-radius: 16px; overflow: hidden; }
+.about-photo-frame img { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 16px; }
+.about-monogram { display: flex; align-items: center; justify-content: center; width: 100%; aspect-ratio: 4 / 5; border-radius: 16px; background: radial-gradient(circle at 28% 18%, var(--raised, rgba(255, 255, 255, 0.08)), transparent 62%), var(--bg, #181818); color: var(--accent, #ff5a36); font-family: var(--font-display, 'Open Sans', sans-serif); font-size: clamp(4rem, 11vw, 8rem); line-height: 1; letter-spacing: -0.02em; }
+.about-section { padding-block: clamp(2.5rem, 5vw, 4.5rem); border-top: 1px solid var(--border, rgba(255, 255, 255, 0.1)); }
 .about-intro { background: var(--raised, rgba(255, 255, 255, 0.04)); }
-.about-intro-copy { max-width: 960px; }
-.about-intro-copy p { font-family: var(--font-display, 'Instrument Serif', Georgia, serif); font-size: clamp(1.5rem, 2.8vw, 2.35rem); line-height: 1.35; white-space: pre-line; }
-.about-intro-copy p + p { margin-top: 1.2em; }
-.about-quote-block { margin: 0; max-width: 1150px; }
-.about-quote-text { font-family: var(--font-display, 'Instrument Serif', Georgia, serif); font-size: clamp(2rem, 4.6vw, 4rem); line-height: 1.1; letter-spacing: -0.01em; }
-.about-quote-support { max-width: 640px; margin-top: clamp(1.5rem, 3vw, 2.5rem); color: var(--muted, #aaa); font-size: clamp(1rem, 1.5vw, 1.2rem); line-height: 1.6; }
-.about-cta { padding-block: clamp(2.5rem, 6vw, 5rem) clamp(4rem, 8vw, 7rem); }
+/* Intro and quote use the same left/right bounds as the hero grid instead of a narrow centred column. */
+.about-intro-copy { column-count: 2; column-gap: clamp(2rem, 4vw, 4rem); }
+.about-intro-copy p { font-family: var(--font-body, 'Open Sans', sans-serif); font-size: clamp(1.05rem, 1.35vw, 1.2rem); line-height: 1.75; margin: 0 0 1.1em; break-inside: avoid; }
+.about-intro-copy p:last-child { margin-bottom: 0; }
+.about-quote-block { margin: 0; max-width: none; }
+.about-quote-text { font-family: var(--font-display, 'Open Sans', sans-serif); font-size: clamp(1.9rem, 3.4vw, 3rem); font-weight: 500; line-height: 1.16; letter-spacing: -0.01em; }
+.about-quote-support { max-width: none; margin-top: clamp(1rem, 2vw, 1.5rem); color: var(--muted, #aaa); font-size: 1rem; line-height: 1.6; }
+.about-cta { padding-block: clamp(2.5rem, 5vw, 4rem) clamp(3.5rem, 7vw, 6rem); text-align: center; }
+.about-cta .about-container { display: flex; justify-content: center; }
 .about-cta-button { display: inline-flex; align-items: center; justify-content: center; padding: 0.9rem 2.1rem; border: 1px solid var(--text, #fff); border-radius: 999px; font-family: var(--font-body, 'Open Sans', sans-serif); font-size: 0.95rem; font-weight: 600; letter-spacing: 0.02em; color: var(--text, #fff); transition: color 0.2s ease, border-color 0.2s ease; }
 .about-cta-button:hover { color: var(--accent, #ff5a36); border-color: var(--accent, #ff5a36); }
 .about-cta-button:focus-visible { color: var(--accent, #ff5a36); border-color: var(--accent, #ff5a36); outline: 2px solid var(--accent, #ff5a36); outline-offset: 4px; }
@@ -190,9 +193,9 @@ main.about-page { max-width: none; margin: 0; padding: 0; }
 @media (max-width: 900px) {
   .grid { grid-template-columns: repeat(var(--home-cols-mobile, 1), minmax(0, 1fr)); }
   main.home-page { max-width: 100%; }
-  /* About page: single column, text first, then a wider (landscape) photo/monogram panel. */
+  /* About page: single column, text first, then the same portrait crop as desktop. */
   .about-hero-grid { grid-template-columns: minmax(0, 1fr); }
-  .about-photo-frame img, .about-monogram { aspect-ratio: 4 / 3; }
+  .about-intro-copy { column-count: 1; }
 }
 @media (max-width: 768px) {
   header { padding: calc(var(--header-pad-y, 1.5rem) * 0.66) calc(var(--header-pad-x, 4rem) * 0.375); }
@@ -210,12 +213,13 @@ main.about-page { max-width: none; margin: 0; padding: 0; }
   .carousel-item { flex: 0 0 calc(var(--carousel-item-width, 280px) * 0.857); }
 }
 
-/* About page: phones — tighter display type and a full-width, easy-to-tap CTA */
+/* About page: phones — tighter type scale and a full-width, easy-to-tap CTA */
 @media (max-width: 600px) {
-  .about-headline { font-size: clamp(2.2rem, 10vw, 3.1rem); }
-  .about-subhead, .about-roles { font-size: clamp(1.6rem, 7.5vw, 2.2rem); }
-  .about-intro-copy p { font-size: clamp(1.25rem, 5.6vw, 1.7rem); }
-  .about-quote-text { font-size: clamp(1.7rem, 7.4vw, 2.5rem); }
+  .about-headline { font-size: clamp(2rem, 8.6vw, 2.8rem); }
+  .about-subhead { font-size: 1rem; }
+  .about-roles { font-size: clamp(1.45rem, 6.4vw, 2rem); }
+  .about-quote-text { font-size: clamp(1.6rem, 6.4vw, 2.2rem); }
+  .about-cta .about-container { display: block; }
   .about-cta-button { display: flex; width: 100%; }
 }
 

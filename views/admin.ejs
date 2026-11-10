@@ -34,7 +34,7 @@
     .hint { font-size: 0.8rem; color: #777; margin: -0.25rem 0 0.75rem; text-transform: none; letter-spacing: 0; }
 
     /* Tabs */
-    .tabs { display: flex; gap: 0.25rem; margin-bottom: 1.5rem; border-bottom: 1px solid #333; }
+    .tabs { display: flex; gap: 0.25rem; margin-bottom: 1.5rem; border-bottom: 1px solid #333; flex-wrap: wrap; }
     .tab-btn { background: none; border: none; border-bottom: 2px solid transparent; color: #aaa; padding: 0.6rem 1rem; font: inherit; font-weight: 600; cursor: pointer; margin-bottom: -1px; }
     .tab-btn:hover { color: #fff; }
     .tab-btn.active { color: #fff; border-bottom-color: #4361ee; }
@@ -276,6 +276,8 @@
 
     <div class="tabs">
       <button type="button" class="tab-btn" data-tab="projects">Projects</button>
+      <button type="button" class="tab-btn" data-tab="about">About</button>
+      <button type="button" class="tab-btn" data-tab="contact">Contact</button>
       <button type="button" class="tab-btn" data-tab="inbox">Inbox<span class="badge" id="unreadBadge"></span></button>
       <button type="button" class="tab-btn" data-tab="settings">Site Settings</button>
     </div>
@@ -292,7 +294,7 @@
               <strong>Drag images here</strong> or click to choose. The first image becomes the cover.
               <div class="drop-list" id="addList"></div>
             </div>
-            <input type="file" id="addImages" multiple accept="image/*" hidden>
+            <input type="file" id="addImages" multiple accept="image/*,.svg" hidden>
           </div>
           <button type="submit" class="btn" id="addBtn">Create Project</button>
           <p id="addStatus" class="status-msg"></p>
@@ -395,6 +397,121 @@
       </div>
     </section>
 
+    <!-- ===================== ABOUT TAB ===================== -->
+    <section class="tab-panel" id="tab-about" hidden>
+      <p class="tab-intro">The content of your About page, which is the site root (<code>/</code>). Global styling lives in Site Settings.</p>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>About page</h2>
+            <p class="hint" style="margin:0;">Headline, story, headshot and call-to-action.</p>
+          </div>
+          <a class="mini" href="/" target="_blank" rel="noopener">Preview about page ↗</a>
+        </div>
+        <div class="field-grid">
+          <div class="field">
+            <label for="setAboutEyebrow">Eyebrow</label>
+            <input type="text" id="setAboutEyebrow" placeholder="About me" data-draft="content" data-path="about.eyebrow">
+          </div>
+          <div class="field">
+            <label for="setAboutHeadline">Headline</label>
+            <input type="text" id="setAboutHeadline" placeholder="I'm Jon Messier." data-draft="content" data-path="about.headline">
+          </div>
+          <div class="field">
+            <label for="setAboutSubhead">Subhead</label>
+            <input type="text" id="setAboutSubhead" placeholder="But I am also..." data-draft="content" data-path="about.subhead">
+          </div>
+        </div>
+        <div class="field">
+          <label for="setAboutRoles">Rotating roles (one per line, up to 6)</label>
+          <textarea id="setAboutRoles" rows="4" placeholder="A visual storyteller.&#10;A restless learner.&#10;A curious generalist." data-draft="content" data-path="about.roles"></textarea>
+          <p class="hint">Each line becomes a role that rotates on the page.</p>
+        </div>
+        <div class="field">
+          <label for="setAboutIntro">Intro</label>
+          <textarea id="setAboutIntro" rows="5" placeholder="A short intro about you. Leave empty to hide this section." data-draft="content" data-path="about.intro"></textarea>
+          <p class="hint">Separate paragraphs with a blank line. On desktop the intro uses two columns.</p>
+        </div>
+        <div class="field-grid">
+          <div class="field">
+            <label for="setAboutQuote">Quote</label>
+            <textarea id="setAboutQuote" rows="3" placeholder="A large pull quote. Leave empty to hide it." data-draft="content" data-path="about.quote"></textarea>
+          </div>
+          <div class="field">
+            <label for="setAboutQuoteText">Quote support text</label>
+            <textarea id="setAboutQuoteText" rows="3" placeholder="A sentence supporting the quote (e.g. an attribution)." data-draft="content" data-path="about.quoteText"></textarea>
+          </div>
+        </div>
+        <div class="field">
+          <label>Headshot</label>
+          <div class="upload-row">
+            <div class="upload-thumb portrait" id="aboutHeadshotPreview"><span>None</span></div>
+            <div>
+              <button type="button" class="mini" id="aboutHeadshotUpload">Upload headshot…</button>
+              <p class="hint" id="aboutHeadshotStatus">Uploaded as-is. Empty shows a monogram fallback on the page.</p>
+            </div>
+          </div>
+        </div>
+        <div class="field-grid">
+          <div class="field">
+            <label for="setAboutButtonText">Button text</label>
+            <input type="text" id="setAboutButtonText" placeholder="Let's get in touch!" data-draft="content" data-path="about.buttonText">
+          </div>
+          <div class="field">
+            <label for="setAboutButtonUrl">Button URL</label>
+            <input type="text" id="setAboutButtonUrl" placeholder="/contact" data-draft="content" data-path="about.buttonUrl">
+          </div>
+        </div>
+        <p class="hint">The button is hidden when its text or URL is empty. The URL must start with <code>/</code> or <code>http(s)://</code>.</p>
+      </div>
+      <div class="save-bar" id="aboutSaveBar">
+        <span class="save-note" id="aboutDirty">All settings saved</span>
+        <div class="save-actions">
+          <button type="button" class="btn btn-outline" id="aboutDiscard">Discard changes</button>
+          <button type="button" class="btn" id="aboutSave">Save changes</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== CONTACT TAB ===================== -->
+    <section class="tab-panel" id="tab-contact" hidden>
+      <p class="tab-intro">The copy shown on your Contact page. Messages still arrive in the Inbox tab.</p>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>Contact page</h2>
+            <p class="hint" style="margin:0;">Heading, intro, reply-to email and the sent confirmation.</p>
+          </div>
+          <a class="mini" href="/contact" target="_blank" rel="noopener">Preview contact page ↗</a>
+        </div>
+        <div class="field-grid">
+          <div class="field">
+            <label for="setContactHeading">Heading</label>
+            <input type="text" id="setContactHeading" data-draft="content" data-path="contact.heading">
+          </div>
+          <div class="field">
+            <label for="setContactEmail">Contact email</label>
+            <input type="email" id="setContactEmail" placeholder="you@example.com" data-draft="content" data-path="contact.email">
+          </div>
+        </div>
+        <div class="field">
+          <label for="setContactIntro">Intro text</label>
+          <textarea id="setContactIntro" rows="3" data-draft="content" data-path="contact.intro"></textarea>
+        </div>
+        <div class="field">
+          <label for="setContactSuccess">Success message (after a message is sent)</label>
+          <textarea id="setContactSuccess" rows="2" data-draft="content" data-path="contact.success"></textarea>
+        </div>
+      </div>
+      <div class="save-bar" id="contactSaveBar">
+        <span class="save-note" id="contactDirty">All settings saved</span>
+        <div class="save-actions">
+          <button type="button" class="btn btn-outline" id="contactDiscard">Discard changes</button>
+          <button type="button" class="btn" id="contactSave">Save changes</button>
+        </div>
+      </div>
+    </section>
+
     <!-- ===================== INBOX TAB ===================== -->
     <section class="tab-panel" id="tab-inbox" hidden>
       <div class="card">
@@ -407,7 +524,7 @@
 
     <!-- ===================== SITE SETTINGS TAB ===================== -->
     <section class="tab-panel" id="tab-settings" hidden>
-      <p class="tab-intro">Design and content for your public site. Changes stay a draft until you click <strong>Save changes</strong> at the bottom of this tab.</p>
+      <p class="tab-intro">Global design and shared site settings. Page-specific copy lives in the About and Contact tabs.</p>
 
       <div class="card">
         <h2>Header &amp; branding</h2>
@@ -442,7 +559,7 @@
           <div class="form-group" style="display:flex; align-items:center; gap:2rem; margin:0;">
             <div style="flex:1;">
               <label for="logoInput">Site Logo (SVG/PNG)</label>
-              <input type="file" id="logoInput" accept="image/*">
+              <input type="file" id="logoInput" accept="image/*,.svg">
               <p id="logoStatus" class="status-msg"></p>
             </div>
             <div style="background:#000; padding:1rem; border-radius:8px; min-width:150px; text-align:center;">
@@ -670,93 +787,6 @@
           <button type="button" class="btn btn-outline" id="siteBgReset">Reset to Default</button>
         </div>
         <p class="status-msg" id="siteBgStatus"></p>
-      </div>
-
-      <div class="card">
-        <h2>Contact page</h2>
-        <p class="hint">The text on your Contact page. Messages still arrive in the Inbox tab.</p>
-        <div class="field-grid">
-          <div class="field">
-            <label for="setContactHeading">Heading</label>
-            <input type="text" id="setContactHeading" data-draft="content" data-path="contact.heading">
-          </div>
-          <div class="field">
-            <label for="setContactEmail">Contact email</label>
-            <input type="email" id="setContactEmail" placeholder="you@example.com" data-draft="content" data-path="contact.email">
-          </div>
-        </div>
-        <div class="field">
-          <label for="setContactIntro">Intro text</label>
-          <textarea id="setContactIntro" rows="3" data-draft="content" data-path="contact.intro"></textarea>
-        </div>
-        <div class="field">
-          <label for="setContactSuccess">Success message (after a message is sent)</label>
-          <textarea id="setContactSuccess" rows="2" data-draft="content" data-path="contact.success"></textarea>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-head">
-          <div>
-            <h2>About page</h2>
-            <p class="hint" style="margin:0;">The content of your About page, which is the site root (/).</p>
-          </div>
-          <a class="mini" href="/" target="_blank" rel="noopener">Preview about page ↗</a>
-        </div>
-        <div class="field-grid">
-          <div class="field">
-            <label for="setAboutEyebrow">Eyebrow</label>
-            <input type="text" id="setAboutEyebrow" placeholder="About me" data-draft="content" data-path="about.eyebrow">
-          </div>
-          <div class="field">
-            <label for="setAboutHeadline">Headline</label>
-            <input type="text" id="setAboutHeadline" placeholder="I'm Jon Messier." data-draft="content" data-path="about.headline">
-          </div>
-          <div class="field">
-            <label for="setAboutSubhead">Subhead</label>
-            <input type="text" id="setAboutSubhead" placeholder="But I am also..." data-draft="content" data-path="about.subhead">
-          </div>
-        </div>
-        <div class="field">
-          <label for="setAboutRoles">Rotating roles (one per line, up to 6)</label>
-          <textarea id="setAboutRoles" rows="4" placeholder="A visual storyteller.&#10;A restless learner.&#10;A curious generalist." data-draft="content" data-path="about.roles"></textarea>
-          <p class="hint">Each line becomes a role that rotates on the page.</p>
-        </div>
-        <div class="field">
-          <label for="setAboutIntro">Intro</label>
-          <textarea id="setAboutIntro" rows="4" placeholder="A short intro about you. Leave empty to hide this section." data-draft="content" data-path="about.intro"></textarea>
-        </div>
-        <div class="field-grid">
-          <div class="field">
-            <label for="setAboutQuote">Quote</label>
-            <textarea id="setAboutQuote" rows="3" placeholder="A large pull quote. Leave empty to hide it." data-draft="content" data-path="about.quote"></textarea>
-          </div>
-          <div class="field">
-            <label for="setAboutQuoteText">Quote support text</label>
-            <textarea id="setAboutQuoteText" rows="3" placeholder="A sentence supporting the quote." data-draft="content" data-path="about.quoteText"></textarea>
-          </div>
-        </div>
-        <div class="field">
-          <label>Headshot</label>
-          <div class="upload-row">
-            <div class="upload-thumb portrait" id="aboutHeadshotPreview"><span>None</span></div>
-            <div>
-              <button type="button" class="mini" id="aboutHeadshotUpload">Upload headshot…</button>
-              <p class="hint" id="aboutHeadshotStatus">Uploaded as-is. Empty shows a monogram fallback on the page.</p>
-            </div>
-          </div>
-        </div>
-        <div class="field-grid">
-          <div class="field">
-            <label for="setAboutButtonText">Button text</label>
-            <input type="text" id="setAboutButtonText" placeholder="Let's get in touch!" data-draft="content" data-path="about.buttonText">
-          </div>
-          <div class="field">
-            <label for="setAboutButtonUrl">Button URL</label>
-            <input type="text" id="setAboutButtonUrl" placeholder="/contact" data-draft="content" data-path="about.buttonUrl">
-          </div>
-        </div>
-        <p class="hint">The button is hidden when its text or URL is empty. The URL must start with <code>/</code> or <code>http(s)://</code>.</p>
       </div>
 
       <div class="card">
@@ -1139,7 +1169,7 @@
     // Tabs
     // ======================================================================
     function showTab(name) {
-      if (!['projects', 'inbox', 'settings'].includes(name)) name = 'projects';
+      if (!['projects', 'about', 'contact', 'inbox', 'settings'].includes(name)) name = 'projects';
       document.querySelectorAll('.tab-panel').forEach(p => { p.hidden = p.id !== 'tab-' + name; });
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
       if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
@@ -1166,7 +1196,10 @@
     async function optimizeImage(file) {
       const type = (file.type || '').toLowerCase();
       const same = { file, before: file.size, after: file.size };
-      if (type === 'image/svg+xml' || type === 'image/gif') return same;   // keep vectors and animations as they are
+      // Vectors and animations stay in their original format (never converted to WebP).
+      const isSvg = type === 'image/svg+xml' || /\.svg$/i.test(file.name);
+      const isGif = type === 'image/gif' || /\.gif$/i.test(file.name);
+      if (isSvg || isGif) return same;
       const isHeic = /heic|heif/.test(type) || /\.(heic|heif)$/i.test(file.name);
       const heicError = new Error(file.name + " is an iPhone HEIC photo this browser can't read. Export it as JPG first, or upload it from Safari.");
 
@@ -1191,11 +1224,14 @@
 
     // Uploads one file to R2 exactly as given and returns its public URL.
     async function uploadToR2(file) {
+      // SVG files (and anything the OS reports without a MIME type) must keep a correct
+      // Content-Type; otherwise the browser/favicon treats them as a download.
+      const contentType = file.type || (/\.svg$/i.test(file.name) ? 'image/svg+xml' : 'application/octet-stream');
       let res;
       try {
         res = await fetch('/api/upload', {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
-          body: JSON.stringify({ filename: file.name, contentType: file.type })
+          body: JSON.stringify({ filename: file.name, contentType })
         });
       } catch (e) {
         throw new Error("Couldn't reach your server to start the upload. Check your internet connection and try again.");
@@ -1207,7 +1243,7 @@
 
       let put;
       try {
-        put = await fetch(data.uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+        put = await fetch(data.uploadUrl, { method: 'PUT', headers: { 'Content-Type': contentType }, body: file });
       } catch (e) {
         throw new Error('Cloudflare R2 blocked the upload of ' + file.name + ". This almost always means the bucket's CORS policy doesn't allow this site yet. Nothing was saved for this image.");
       }
@@ -1226,7 +1262,7 @@
     function pickFiles(multiple) {
       return new Promise(resolve => {
         const input = document.createElement('input');
-        input.type = 'file'; input.accept = 'image/*'; input.multiple = !!multiple;
+        input.type = 'file'; input.accept = 'image/*,.svg'; input.multiple = !!multiple;
         input.addEventListener('change', () => resolve(Array.from(input.files || [])));
         input.click();
       });
@@ -2170,11 +2206,16 @@
     }
     function updateSaveBar() {
       const dirty = hasSettingsChanges();
-      const note = document.getElementById('settingsDirty');
-      note.textContent = dirty ? 'Unsaved changes' : 'All settings saved';
-      note.classList.toggle('dirty', dirty);
-      document.getElementById('settingsSave').disabled = !dirty;
-      document.getElementById('settingsDiscard').disabled = !dirty;
+      ['settings', 'about', 'contact'].forEach(key => {
+        const note = document.getElementById(key + 'Dirty');
+        if (!note) return;
+        note.textContent = dirty ? 'Unsaved changes' : 'All settings saved';
+        note.classList.toggle('dirty', dirty);
+        const save = document.getElementById(key + 'Save');
+        const discard = document.getElementById(key + 'Discard');
+        if (save) save.disabled = !dirty;
+        if (discard) discard.disabled = !dirty;
+      });
     }
     let previewTimer = null;
     function settingsTouched() {
@@ -2589,8 +2630,10 @@
       return '';
     }
     async function saveSettings() {
-      const saveBtn = document.getElementById('settingsSave');
-      saveBtn.disabled = true;
+      const saveButtons = ['settings', 'about', 'contact']
+        .map(key => document.getElementById(key + 'Save'))
+        .filter(Boolean);
+      saveButtons.forEach(btn => { btn.disabled = true; });
       // Clamp one last time so what is posted is exactly what the contract allows.
       DRAFTS.appearance = sanitizeAppearance(DRAFTS.appearance);
       DRAFTS.content = sanitizeContent(DRAFTS.content);
@@ -2629,7 +2672,7 @@
         toast(err.message, 'err');
         return;
       } finally {
-        saveBtn.disabled = false;
+        saveButtons.forEach(btn => { btn.disabled = false; });
         updateSaveBar();
       }
       updateSaveBar();
@@ -2653,6 +2696,10 @@
     }
     document.getElementById('settingsSave').addEventListener('click', saveSettings);
     document.getElementById('settingsDiscard').addEventListener('click', discardSettings);
+    document.getElementById('aboutSave').addEventListener('click', saveSettings);
+    document.getElementById('aboutDiscard').addEventListener('click', discardSettings);
+    document.getElementById('contactSave').addEventListener('click', saveSettings);
+    document.getElementById('contactDiscard').addEventListener('click', discardSettings);
 
     // ---- Initial paint from the server-provided (or default) objects ----
     syncAppearanceControls();
