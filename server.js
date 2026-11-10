@@ -193,7 +193,9 @@ const tintableUrl = (url) => {
 const tintedBrandUrl = (source, color, kind) => {
   if (!source) return '';
   if (!isColor(color) || !isSvgUrl(source) || !tintableUrl(source)) return source;
-  const v = crypto.createHash('sha1').update(source).digest('hex').slice(0, 8);
+  // The salt changes when the tint implementation changes, so previously cached (broken) SVG
+  // responses are bypassed immediately instead of waiting out the 1-day cache.
+  const v = crypto.createHash('sha1').update(source + '|tint-v2').digest('hex').slice(0, 8);
   return `/brand/${kind}.svg?color=${encodeURIComponent(color)}&v=${v}`;
 };
 
