@@ -160,9 +160,8 @@ main.about-page { max-width: none; margin: 0; padding: 0; }
 .about-monogram { display: flex; align-items: center; justify-content: center; width: 100%; aspect-ratio: 4 / 5; border-radius: 16px; background: radial-gradient(circle at 28% 18%, var(--raised, rgba(255, 255, 255, 0.08)), transparent 62%), var(--bg, #181818); color: var(--accent, #ff5a36); font-family: var(--font-display, 'Open Sans', sans-serif); font-size: clamp(4rem, 11vw, 8rem); line-height: 1; letter-spacing: -0.02em; }
 .about-section { padding-block: clamp(2.5rem, 5vw, 4.5rem); border-top: 1px solid var(--border, rgba(255, 255, 255, 0.1)); }
 .about-intro { background: var(--raised, rgba(255, 255, 255, 0.04)); }
-/* Intro and quote use the same left/right bounds as the hero grid instead of a narrow centred column. */
-.about-intro-copy { column-count: 2; column-gap: clamp(2rem, 4vw, 4rem); }
-.about-intro-copy p { font-family: var(--font-body, 'Open Sans', sans-serif); font-size: clamp(1.05rem, 1.35vw, 1.2rem); line-height: 1.75; margin: 0 0 1.1em; break-inside: avoid; }
+/* Intro and quote use the same left/right bounds as the hero grid; paragraphs stack vertically. */
+.about-intro-copy p { font-family: var(--font-body, 'Open Sans', sans-serif); font-size: clamp(1.05rem, 1.35vw, 1.2rem); line-height: 1.75; margin: 0 0 1.6em; }
 .about-intro-copy p:last-child { margin-bottom: 0; }
 .about-quote-block { margin: 0; max-width: none; }
 .about-quote-text { font-family: var(--font-display, 'Open Sans', sans-serif); font-size: clamp(1.9rem, 3.4vw, 3rem); font-weight: 500; line-height: 1.16; letter-spacing: -0.01em; }
@@ -197,7 +196,6 @@ main.about-page { max-width: none; margin: 0; padding: 0; }
   main.home-page { max-width: 100%; }
   /* About page: single column, text first, then the same portrait crop as desktop. */
   .about-hero-grid { grid-template-columns: minmax(0, 1fr); }
-  .about-intro-copy { column-count: 1; }
 }
 @media (max-width: 768px) {
   header { padding: calc(var(--header-pad-y, 1.5rem) * 0.66) calc(var(--header-pad-x, 4rem) * 0.375); }
